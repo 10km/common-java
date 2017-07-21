@@ -6,14 +6,13 @@
   <packaging>jar</packaging>
 
   <name>common-bean</name>
-
+  <parent>
+  	  <groupId>net.gdface.common</groupId>
+      <artifactId>common</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <relativePath>..</relativePath>
+  </parent>
   <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
     	<groupId>commons-beanutils</groupId>
     	<artifactId>commons-beanutils</artifactId>
@@ -22,14 +21,7 @@
 	  <dependency>
 	  	<groupId>net.gdface.common</groupId>
 	  	<artifactId>common-base</artifactId>
-	  	<version>1.0-SNAPSHOT</version>
+	  	<version>${net.gdface.common.version}</version>
 	  </dependency>
   </dependencies>
-  <parent>
-  	  <groupId>net.gdface.common</groupId>
-      <artifactId>common-full</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <relativePath>../common-full</relativePath>
-  </parent>
-
 </project>
