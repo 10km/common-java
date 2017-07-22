@@ -21,7 +21,7 @@
 	  <dependency>
 	  	<groupId>net.gdface.common</groupId>
 	  	<artifactId>common-base</artifactId>
-	  	<version>${net.gdface.common.version}</version>
+	  	<version>${project.version}</version>
 	  </dependency>
   </dependencies>
 </project>
