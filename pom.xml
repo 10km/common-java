@@ -10,7 +10,6 @@
   <url>http://maven.apache.org</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <net.gdface.common.version>${project.version}</net.gdface.common.version>
   </properties>
 
   <dependencies>
