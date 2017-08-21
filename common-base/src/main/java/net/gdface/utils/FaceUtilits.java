@@ -55,9 +55,8 @@ public class FaceUtilits {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			return md.digest(source);
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		return null;
 	}
 
 	/**
