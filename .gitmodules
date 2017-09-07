@@ -1,3 +1,0 @@
-[submodule "common-base/src/main/java/org/json"]
-	path = common-base/src/main/java/org/json
-	url = https://github.com/10km/JSON-java.git
