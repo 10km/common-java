@@ -442,4 +442,27 @@ public class FaceUtilits {
 		}
 		bw.flush();
 	}
+	
+	/**
+	 * 比较两个Map是否相等
+	 * @param m1
+	 * @param m2
+	 * @return
+	 */
+	public static <K,V>boolean equals(Map<K,V> m1,Map<K,V> m2){
+		if(m1==m2)return true;
+		if(null ==m1 || null ==m2)return false;
+		if(m1.size() != m2.size())return false;
+		for(Entry<K, V> entry:m1.entrySet()){
+			K key = entry.getKey();
+			if(!m2.containsKey(key))return false;
+			V v1 = entry.getValue();
+			V v2 = m2.get(key);
+			if(v1 ==v2 ) continue;
+			if(null ==v1 || null ==v2)return false;
+			if(!v1.equals(v2))
+				return false;
+		}
+		return true;
+	}
 }
