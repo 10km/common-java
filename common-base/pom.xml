@@ -5,13 +5,6 @@
   <packaging>jar</packaging>
   <name>common-base</name>
 
-  <dependencies>
-    <dependency>
-    	<groupId>org.slf4j</groupId>
-    	<artifactId>slf4j-api</artifactId>
-    	<version>1.7.7</version>
-    </dependency>
-  </dependencies>
   <parent>
   	  <groupId>net.gdface.common</groupId>
       <artifactId>common</artifactId>

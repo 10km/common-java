@@ -28,9 +28,6 @@ import net.gdface.utils.Assert;
 import net.gdface.utils.FaceUtilits;
 import net.gdface.utils.Judge;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * 图像数据处理对象<br>
  * {@link #open()}可以在不将图像全部解码加载到内存而获取图像的基本信息<br>
@@ -40,7 +37,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class LazyImage {
-	static final Logger logger = LoggerFactory.getLogger(LazyImage.class);
 	/**
 	 * 图像原始数据(未解码)
 	 */
@@ -481,8 +477,7 @@ public class LazyImage {
 	 */
 	public File save(File folder) throws IOException {
 		File file = new File(folder,getMd5()+(Judge.isEmpty(this.suffix)?"":"."+this.suffix));
-		localFile= FaceUtilits.saveBytes(getImgBytes(), file, file.exists()&&file.isFile()&&0==file.length());
-		logger.info(" SAVED " + localFile.getCanonicalPath());
+		localFile= FaceUtilits.saveBytes(getImgBytes(), file, file.exists()&&file.isFile()&&0==file.length());		
 		return localFile;
 	}
 	
