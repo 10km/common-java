@@ -9,6 +9,7 @@
 package net.gdface.utils;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**断言类
  * @author guyadong
@@ -51,7 +52,11 @@ public class Assert {
 		}
 	}
 	public static final <T extends Collection<?>>void notEmpty(T t,String arg){
-		if (null == t||0==t.size())
+		if (null == t || t.isEmpty())
+			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
+	}
+	public static final <T extends Map<?,?>>void notEmpty(T t,String arg){
+		if (null == t|| t.isEmpty())
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
 	}
 	public static final void notEmpty(byte[] t,String arg){
