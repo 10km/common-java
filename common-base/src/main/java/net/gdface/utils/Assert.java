@@ -8,6 +8,8 @@
 */
 package net.gdface.utils;
 
+import java.lang.reflect.Array;
+import java.nio.Buffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -51,6 +53,22 @@ public class Assert {
 			}
 		}
 	}
+	public static final void notEmptyElement(Buffer[] t,String arg){
+		notEmpty(t,arg);
+		for(int i=0;i<t.length;i++){			
+			if (null == t[i] || !t[i].hasArray() || 0 == Array.getLength(t[i])) {
+				throw new IllegalArgumentException(String.format("%s:%s[%d] is null or empty",getLocation(),arg,i));
+			}
+		}
+	}
+	public static final void notEmptyElement(Collection<Buffer> t,String arg){
+		notEmpty(t,arg);
+		for(Buffer buffer:t){			
+			if (null == buffer || !buffer.hasArray() || 0 == Array.getLength(buffer)) {
+				throw new IllegalArgumentException(String.format("%s:%s have null or empty element",getLocation(),arg));
+			}
+		}
+	}
 	public static final <T extends Collection<?>>void notEmpty(T t,String arg){
 		if (null == t || t.isEmpty())
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
@@ -66,6 +84,10 @@ public class Assert {
 	public static final void notEmpty(String t,String arg){
 		if (null == t||0==t.length())
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
+	}
+	public static final void notEmpty(Buffer t,String arg){
+		if (null == t || !t.hasArray() || 0 == Array.getLength(t.array()))
+			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));
 	}
 
 	public static final void assertValidCode(byte[] code1, byte[] code2){

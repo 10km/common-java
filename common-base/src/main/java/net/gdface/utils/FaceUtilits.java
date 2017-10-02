@@ -112,6 +112,17 @@ public class FaceUtilits {
 		return toHex(getMD5(source));
 	}
 	/**
+	 * 生成MD5校验码字符串
+	 * 
+	 * @param source
+	 * @return
+	 * @see #getMD5(byte[])
+	 * @see #toHex(byte[])
+	 */
+	static public String getMD5String(ByteBuffer source) {
+		return null ==source || (!source.hasArray())? null:toHex(getMD5(source.array()));
+	}
+	/**
 	 * 判断是否为有效的MD5字符串
 	 * @return
 	 */
