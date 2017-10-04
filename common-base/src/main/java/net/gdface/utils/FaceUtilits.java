@@ -58,14 +58,40 @@ public class FaceUtilits {
 			throw new RuntimeException(e);
 		}
 	}
-
+	/**
+	 * 返回buffer中所有字节(0~limit)
+	 * @param buffer
+	 * @return
+	 */
+	public static final byte[] getAllBytesInBuffer(ByteBuffer buffer){
+		if(null == buffer )return null;
+		if(buffer.hasArray())return buffer.array();
+		int pos = buffer.position();
+		try{
+			buffer.position(0);
+			byte[] bytes = new byte[buffer.remaining()];
+			buffer.get(bytes);
+			return bytes;
+		}finally{
+			buffer.position(pos);
+		}
+	}
+	/**
+	 * 生成MD5校验码
+	 * @param source
+	 * @return
+	 * @see #getMD5(byte[])
+	 */
+	static public ByteBuffer getMD5(ByteBuffer source) {
+		return null == source ?null:ByteBuffer.wrap(getMD5(getAllBytesInBuffer(source)));
+	}
 	/**
 	 * 将16位byte[] 转换为32位的HEX格式的字符串String
 	 * 
 	 * @param buffer
 	 * @return
 	 */
-	static public String toHex(byte buffer[]) {
+	static public String toHex(byte[] buffer) {
 		if (Judge.isNull(buffer))
 			return null;
 		StringBuffer sb = new StringBuffer(buffer.length * 2);
@@ -75,7 +101,10 @@ public class FaceUtilits {
 		}
 		return sb.toString();
 	}
-
+	/** @see #toHex(byte[]) */
+	static public String toHex(ByteBuffer buffer) {
+		return toHex(getAllBytesInBuffer(buffer));  
+	}
 	
     public static byte[] hex2Bytes(String src){  
         byte[] res = new byte[src.length()/2];  
@@ -99,7 +128,10 @@ public class FaceUtilits {
         }  
           
         return res;  
-    }  
+    } 
+    public static ByteBuffer hex2ByteBuffer(String src){
+    	return null == src?null:ByteBuffer.wrap(hex2Bytes(src));
+    }
 	/**
 	 * 生成MD5校验码字符串
 	 * 
@@ -120,7 +152,7 @@ public class FaceUtilits {
 	 * @see #toHex(byte[])
 	 */
 	static public String getMD5String(ByteBuffer source) {
-		return null ==source || (!source.hasArray())? null:toHex(getMD5(source.array()));
+		return toHex(getMD5(source));
 	}
 	/**
 	 * 判断是否为有效的MD5字符串
@@ -179,7 +211,7 @@ public class FaceUtilits {
 	}
 	/**
 	 * 将对象转换为InputStream<br>
-	 * 类型可以是byte[],{@link InputStream},{@link String}(base64编码),{@link File},{@link URL},{@link URI},否则抛出RuntimeException<br>
+	 * 类型可以是byte[],{@link ByteBuffer},{@link InputStream},{@link String}(base64编码),{@link File},{@link URL},{@link URI},否则抛出RuntimeException<br>
 	 * 
 	 * @param src
 	 *            获取InputStream的源对象
@@ -195,6 +227,8 @@ public class FaceUtilits {
 			return new ByteArrayInputStream(Base64Utils.decode(((String) src)));
 		} else if (src instanceof byte[]) {
 			return new ByteArrayInputStream((byte[]) src);
+		} else if (src instanceof ByteBuffer) {
+			return new ByteArrayInputStream(getAllBytesInBuffer((ByteBuffer) src));
 		} else if (src instanceof File) {
 			return new FileInputStream((File) src);
 		} else if (src instanceof URL) {
@@ -208,7 +242,7 @@ public class FaceUtilits {
 
 	/**
 	 * 将数据对象{@code src}转换为字节数组(byte[])<br>
-	 * {@code src}的数据类型可以是byte[],{@link InputStream},{@link String}(base64编码),{@link File},{@link URL},{@link URI}
+	 * {@code src}的数据类型可以是byte[],{@link InputStream},{@link ByteBuffer},{@link String}(base64编码),{@link File},{@link URL},{@link URI}
 	 * 否则抛出{@link IllegalArgumentException}<br>
 	 * 对象转换为InputStream或byte[]时,可能会抛出{@link IOException}
 	 * 
@@ -230,6 +264,8 @@ public class FaceUtilits {
 			return (byte[]) src;
 		} else if (src instanceof String) {
 			return Base64Utils.decode(((String) src));
+		} else if (src instanceof ByteBuffer) {
+			return getAllBytesInBuffer((ByteBuffer)src);
 		} else if (src instanceof FileInputStream){
 			return readBytes((FileInputStream)src);
 		}else if (src instanceof File){

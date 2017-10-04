@@ -56,7 +56,7 @@ public class Judge {
 	 * @return
 	 */
 	public static final boolean isEmpty(Buffer arg) {
-		return (null == arg || !arg.hasArray() || 0 == Array.getLength(arg.array()));
+		return (null == arg || 0 == arg.limit());
 	}
 	/**
 	 * 判断所有数组对象是不是有为null或空的，只要有一个，就返回true;

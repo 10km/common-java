@@ -56,7 +56,7 @@ public class Assert {
 	public static final void notEmptyElement(Buffer[] t,String arg){
 		notEmpty(t,arg);
 		for(int i=0;i<t.length;i++){			
-			if (null == t[i] || !t[i].hasArray() || 0 == Array.getLength(t[i])) {
+			if (null == t[i] || 0 == t[i].limit()) {
 				throw new IllegalArgumentException(String.format("%s:%s[%d] is null or empty",getLocation(),arg,i));
 			}
 		}
@@ -86,7 +86,7 @@ public class Assert {
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
 	}
 	public static final void notEmpty(Buffer t,String arg){
-		if (null == t || !t.hasArray() || 0 == Array.getLength(t.array()))
+		if (null == t || 0 == t.limit())
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));
 	}
 
