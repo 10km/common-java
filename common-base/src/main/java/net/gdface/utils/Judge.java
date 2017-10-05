@@ -8,7 +8,6 @@
  */
 package net.gdface.utils;
 
-import java.lang.reflect.Array;
 import java.nio.Buffer;
 import java.util.Collection;
 
@@ -56,7 +55,7 @@ public class Judge {
 	 * @return
 	 */
 	public static final boolean isEmpty(Buffer arg) {
-		return (null == arg || 0 == arg.limit());
+		return (null == arg || !arg.hasRemaining());
 	}
 	/**
 	 * 判断所有数组对象是不是有为null或空的，只要有一个，就返回true;

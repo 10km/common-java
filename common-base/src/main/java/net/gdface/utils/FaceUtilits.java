@@ -59,16 +59,14 @@ public class FaceUtilits {
 		}
 	}
 	/**
-	 * 返回buffer中所有字节(0~limit)
+	 * 返回buffer中所有字节(position~limit),不改变buffer状态
 	 * @param buffer
-	 * @return
+	 * @return buffer 为 null 时返回 null 
 	 */
-	public static final byte[] getAllBytesInBuffer(ByteBuffer buffer){
-		if(null == buffer )return null;
-		if(buffer.hasArray())return buffer.array();
+	public static final byte[] getBytesInBuffer(ByteBuffer buffer){
+		if(null == buffer)return null;
 		int pos = buffer.position();
 		try{
-			buffer.position(0);
 			byte[] bytes = new byte[buffer.remaining()];
 			buffer.get(bytes);
 			return bytes;
@@ -83,7 +81,7 @@ public class FaceUtilits {
 	 * @see #getMD5(byte[])
 	 */
 	static public ByteBuffer getMD5(ByteBuffer source) {
-		return null == source ?null:ByteBuffer.wrap(getMD5(getAllBytesInBuffer(source)));
+		return null == source ?null:ByteBuffer.wrap(getMD5(getBytesInBuffer(source)));
 	}
 	/**
 	 * 将16位byte[] 转换为32位的HEX格式的字符串String
@@ -103,7 +101,7 @@ public class FaceUtilits {
 	}
 	/** @see #toHex(byte[]) */
 	static public String toHex(ByteBuffer buffer) {
-		return toHex(getAllBytesInBuffer(buffer));  
+		return toHex(getBytesInBuffer(buffer));  
 	}
 	
     public static byte[] hex2Bytes(String src){  
@@ -228,7 +226,7 @@ public class FaceUtilits {
 		} else if (src instanceof byte[]) {
 			return new ByteArrayInputStream((byte[]) src);
 		} else if (src instanceof ByteBuffer) {
-			return new ByteArrayInputStream(getAllBytesInBuffer((ByteBuffer) src));
+			return new ByteArrayInputStream(getBytesInBuffer((ByteBuffer) src));
 		} else if (src instanceof File) {
 			return new FileInputStream((File) src);
 		} else if (src instanceof URL) {
@@ -265,7 +263,7 @@ public class FaceUtilits {
 		} else if (src instanceof String) {
 			return Base64Utils.decode(((String) src));
 		} else if (src instanceof ByteBuffer) {
-			return getAllBytesInBuffer((ByteBuffer)src);
+			return getBytesInBuffer((ByteBuffer)src);
 		} else if (src instanceof FileInputStream){
 			return readBytes((FileInputStream)src);
 		}else if (src instanceof File){
