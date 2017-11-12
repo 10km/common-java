@@ -10,7 +10,14 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+/**
+ * 配置文件读取工具类
+ * @author guyadong
+ *
+ */
 public class ConfigUtils {
+	private static final String JAR_SUFFIX = ".jar";
+
 	/**
 	 * 顺序加载不同位置的properties文件,加载顺序为:<br>
 	 * 1.调用{@link ClassLoader#getResource(String)}方法在{@code clazz}所在位置查找,如果失败则抛出异常<br>
@@ -26,38 +33,42 @@ public class ConfigUtils {
 	 * @return 返回加载后的{@link Properties}对象
 	 */
 	public static Properties loadAllProperties(String propFile, String confFolder, String envVar, Class<?> clazz, boolean showProp) {
-		if(null==propFile||propFile.isEmpty())
+		if(null==propFile||propFile.isEmpty()){
 			throw new IllegalArgumentException("the argument 'propFile' must not be null or empty");
-		if (null == confFolder)
+		}
+		if (null == confFolder){
 			confFolder = "conf";
-		if (null == clazz)
+		}
+		if (null == clazz){
 			clazz = ConfigUtils.class;
+		}
 		final String fileSeparator = System.getProperty("file.separator");
-		String prop_path = confFolder.concat(System.getProperty("file.separator")).concat(propFile);
+		String propPath = confFolder.concat(System.getProperty("file.separator")).concat(propFile);
 		Properties props = new Properties();
-		Set<File> loaded_files = new HashSet<File>();
+		Set<File> loadedFiles = new HashSet<File>();
 		try {
 			// 在jar包中查找默认配置文件
-			URL url = clazz.getClassLoader().getResource(prop_path.replace(fileSeparator, "/"));
-			if(null==url)
-				throw new ExceptionInInitializerError(String.format("not found default properties %s", prop_path));
+			URL url = clazz.getClassLoader().getResource(propPath.replace(fileSeparator, "/"));
+			if(null==url){
+				throw new ExceptionInInitializerError(String.format("not found default properties %s", propPath));
+			}
 			loadProperties(url, props);
 		} catch (Exception e) {
 			// 默认配置必须加载成功否则抛出异常
-			throw new ExceptionInInitializerError(String.format("fail to load default properties(加载默认配置文件失败) %s cause by %s", prop_path,
+			throw new ExceptionInInitializerError(String.format("fail to load default properties(加载默认配置文件失败) %s cause by %s", propPath,
 					e.getMessage()));
 		}
 		try {
 			// 加载 jar包所在位置 ../conf/cassdk.properties
-			URL class_location = clazz.getProtectionDomain().getCodeSource().getLocation();
-			if (class_location.toString().endsWith(".jar")) {
+			URL classLocation = clazz.getProtectionDomain().getCodeSource().getLocation();
+			if (classLocation.toString().endsWith(JAR_SUFFIX)) {
 				// jar包所在目录的父目录,tomcat下即为WEB-INF
-				File jar_parent = new File(class_location.getPath()).getParentFile().getParentFile();
-				if (null != jar_parent) {
-					File conf_file = new File(jar_parent, prop_path);
-					if (conf_file.isFile()) {
-						loadProperties(conf_file.toURI().toURL(), props);
-						loaded_files.add(conf_file);
+				File jarParent = new File(classLocation.getPath()).getParentFile().getParentFile();
+				if (null != jarParent) {
+					File confFile = new File(jarParent, propPath);
+					if (confFile.isFile()) {
+						loadProperties(confFile.toURI().toURL(), props);
+						loadedFiles.add(confFile);
 					}
 				}
 			}
@@ -68,29 +79,31 @@ public class ConfigUtils {
 			if (envVar != null && !envVar.isEmpty()) {
 				String cf = System.getProperty(envVar);
 				if (null != cf&&!cf.isEmpty()) {
-					File env_file = new File(cf, propFile);
-					if (!loaded_files.contains(env_file)) {
-						loadProperties(env_file.toURI().toURL(), props);
-						loaded_files.add(env_file);
+					File envFile = new File(cf, propFile);
+					if (!loadedFiles.contains(envFile)) {
+						loadProperties(envFile.toURI().toURL(), props);
+						loadedFiles.add(envFile);
 					}
-				} else
+				} else{
 					log("not defined environment variable '%s'", envVar);
+				}
 			}
 		} catch (Exception e) {
 		}
 		try {
 			// 在当前路径下查找配置文件
-			File propInUserDir = new File(System.getProperty("user.dir"), prop_path);
-			if (propInUserDir.isFile() && !loaded_files.contains(propInUserDir)) {
+			File propInUserDir = new File(System.getProperty("user.dir"), propPath);
+			if (propInUserDir.isFile() && !loadedFiles.contains(propInUserDir)) {
 				loadProperties(propInUserDir.toURI().toURL(), props);
-				loaded_files.add(propInUserDir);
+				loadedFiles.add(propInUserDir);
 			}
 		} catch (Exception e) {
 		}
 
 		// 输出所有参数值
-		if(showProp)
+		if(showProp){
 			props.list(System.out);
+		}
 		return props;
 	}
 	
@@ -120,13 +133,17 @@ public class ConfigUtils {
 	 * @see {@link System#getProperties()}
 	 */
 	public static void storePropertiesInUserHome(Properties properties,String propertiesFile) throws IOException{
-		if(null==properties)
+		if(null==properties){
 			throw new NullPointerException();
-		if(null==propertiesFile||propertiesFile.isEmpty())
+		}
+		if(null==propertiesFile||propertiesFile.isEmpty()){
 			throw new IllegalArgumentException("propertiesFile must not be empty or null");
+		}
 		File propInUserHome = new File(System.getProperty("user.home"), propertiesFile);
 		File parent=propInUserHome.getParentFile();
-		if(!parent.exists())parent.mkdirs();
+		if(!parent.exists()){
+			parent.mkdirs();
+		}
 		properties.store(new FileWriter(propInUserHome), null);
 
 	}
@@ -146,8 +163,9 @@ public class ConfigUtils {
 				props.load(new InputStreamReader(is = url.openStream(),"UTF-8"));
 				log("Load properties from %s", url.toString());
 			} finally {
-				if (is != null)
+				if (is != null){
 					is.close();
+				}
 			}			
 		}
 	}
