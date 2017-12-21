@@ -60,4 +60,23 @@
 		<module>common-bean</module>
 		<module>common-cli</module>
 	</modules>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<name>guyadong</name>
+			<email>10km0811@sohu.com</email>
+			<url>https://gitee.com/l0km</url>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:https://gitee.com/l0km/common-java.git</connection>
+		<developerConnection>scm:git:https://gitee.com/l0km/common-java.git</developerConnection>
+		<url>https://gitee.com/l0km/common-java</url>
+	</scm>
 </project>
