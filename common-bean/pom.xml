@@ -1,17 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <artifactId>common-bean</artifactId>
-  <packaging>jar</packaging>
-
-  <name>common-bean</name>
   <parent>
-  	  <groupId>net.gdface.common</groupId>
+  	  <groupId>com.gitee.l0km</groupId>
       <artifactId>common</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>1.0.0-SNAPSHOT</version>
       <relativePath>..</relativePath>
   </parent>
+  <artifactId>common-bean</artifactId>
+  <packaging>jar</packaging>
+  <name>common-bean</name>
   <dependencies>
     <dependency>
     	<groupId>commons-beanutils</groupId>
@@ -19,9 +17,13 @@
     	<version>1.9.2</version>
     </dependency>
 	  <dependency>
-	  	<groupId>net.gdface.common</groupId>
+	  	<groupId>com.gitee.l0km</groupId>
 	  	<artifactId>common-base</artifactId>
 	  	<version>${project.version}</version>
 	  </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
   </dependencies>
 </project>
