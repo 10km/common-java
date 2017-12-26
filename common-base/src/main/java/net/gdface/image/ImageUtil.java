@@ -9,13 +9,22 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentSampleModel;
+import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Iterator;
 
+import javax.imageio.IIOException;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 
 import net.gdface.utils.Assert;
 
@@ -64,15 +73,29 @@ public class ImageUtil {
 		}
 		return target;
 	}
-	
+	public static byte[] wirteJPEGBytes(BufferedImage source){
+		return wirteJPEGBytes(source,null);
+	}
+	public static byte[] wirteBMPytes(BufferedImage source){
+		return wirteBytes(source,"BMP");
+	}
+	public static byte[] wirtePNGytes(BufferedImage source){
+		return wirteBytes(source,"PNG");
+	}
+	public static byte[] wirteGIFytes(BufferedImage source){
+		return wirteBytes(source,"GIF");
+	}
 	/**
 	 * 将原图压缩生成jpeg格式的数据
 	 * @param source
 	 * @return
 	 * @see #wirteBytes(BufferedImage, String)
 	 */
-	public static byte[] wirteJPEGBytes(BufferedImage source){
-		return wirteBytes(source,"JPEG");
+	public static byte[] wirteJPEGBytes(BufferedImage source,Float compressionQuality){
+		return wirteBytes(source,"JPEG",compressionQuality);
+	}
+	public static byte[] wirteBytes(BufferedImage source,String formatName){
+		return wirteBytes(source,formatName,null);
 	}
 	/**
 	 * 将{@link BufferedImage}生成formatName指定格式的图像数据
@@ -80,7 +103,7 @@ public class ImageUtil {
 	 * @param formatName 图像格式名，图像格式名错误则抛出异常
 	 * @return
 	 */
-	public static byte[] wirteBytes(BufferedImage source,String formatName){
+	public static byte[] wirteBytes(BufferedImage source,String formatName,Float compressionQuality){
 		Assert.notNull(source, "source");
 		Assert.notEmpty(formatName, "formatName");
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -88,7 +111,7 @@ public class ImageUtil {
 		try {
 			// 对于某些格式的图像(如png)，直接调用ImageIO.write生成jpeg可能会失败
 			// 所以先尝试直接调用ImageIO.write,如果失败则用Graphics生成新的BufferedImage再调用ImageIO.write
-			for(BufferedImage s=source;!ImageIO.write(s, formatName, output);){
+			for(BufferedImage s=source;!write(s, formatName, output,compressionQuality);){
 				if(null!=g)
 					throw new IllegalArgumentException(String.format("not found writer for '%s'",formatName));
 				s = new BufferedImage(source.getWidth(),
@@ -334,5 +357,68 @@ public class ImageUtil {
 		int height=src.getHeight(null);
 		int size=Math.max(width, height);
 		return growCanvas(src,BufferedImage.TYPE_3BYTE_BGR,0,0,size-width,size-height);
+	}
+    /**
+     * Returns <code>ImageWriter</code> instance according to given
+     * rendered image and image format or <code>null</code> if there
+     * is no appropriate writer.
+     */
+    private static ImageWriter getImageWriter(RenderedImage im,
+                                         String formatName) {
+        ImageTypeSpecifier type =
+            ImageTypeSpecifier.createFromRenderedImage(im);
+        Iterator<ImageWriter> iter = ImageIO.getImageWriters(type, formatName);
+
+        if (iter.hasNext()) {
+            return iter.next();
+        } else {
+            return null;
+        }
+    }
+
+	/**
+	 * 将原图压缩生成{@code formatName}指定格式的数据<br>
+	 * 除了可以指定生成的图像质量之外，
+	 * 其他行为与{@link ImageIO#write(RenderedImage, String, OutputStream)}相同
+	 * @param source
+	 * @param formatName
+	 * @param output
+	 * @param compressionQuality 指定图像质量,为{@code null}调用{@link ImageIO#write(RenderedImage, String, OutputStream)}
+	 * @return
+	 * @throws IOException
+	 */
+	public static boolean write(RenderedImage source,
+			String formatName,
+			OutputStream output,
+			Float compressionQuality) throws IOException{
+		if(null == compressionQuality){
+			return ImageIO.write(source, formatName, output);
+		}
+		ImageWriter writer = getImageWriter(source,formatName);
+		if(null == writer){
+			return false;
+		}
+        ImageOutputStream stream = null;
+        try {
+            stream = ImageIO.createImageOutputStream(output);
+        } catch (IOException e) {
+            throw new IIOException("Can't create output stream!", e);
+        }
+		writer.setOutput(stream);
+		ImageWriteParam param = writer.getDefaultWriteParam();
+		try{
+			if(param.canWriteCompressed()){
+				try{
+					param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+					param.setCompressionQuality(compressionQuality);
+				}catch(RuntimeException e){					
+				}
+			}
+			writer.write(null, new IIOImage(source, null, null), param);
+			return true;
+		} finally {
+			writer.dispose();
+			stream.flush();
+		}
 	}
 }
