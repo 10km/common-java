@@ -112,8 +112,9 @@ public class ImageUtil {
 			// 对于某些格式的图像(如png)，直接调用ImageIO.write生成jpeg可能会失败
 			// 所以先尝试直接调用ImageIO.write,如果失败则用Graphics生成新的BufferedImage再调用ImageIO.write
 			for(BufferedImage s=source;!write(s, formatName, output,compressionQuality);){
-				if(null!=g)
+				if(null!=g){
 					throw new IllegalArgumentException(String.format("not found writer for '%s'",formatName));
+				}
 				s = new BufferedImage(source.getWidth(),
 						source.getHeight(), BufferedImage.TYPE_INT_RGB);
 				g = s.createGraphics();
@@ -122,8 +123,9 @@ public class ImageUtil {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} finally {
-			if (null != g)
+			if (null != g){
 				g.dispose();
+			}
 		}
 		return output.toByteArray();		
 	}
@@ -181,8 +183,9 @@ public class ImageUtil {
 		Assert.notEmpty(imageBytes, "imageBytes");
 		try {
 			BufferedImage source = ImageIO.read(new ByteArrayInputStream(imageBytes));
-			if(null==source)
+			if(null==source){
 				throw new IllegalArgumentException("unsupported image format");
+			}
 			BufferedImage thumbnail = createThumbnail(source, thumbnailWidth, thumbnailHeight, ratioThreshold);
 			return wirteJPEGBytes(thumbnail);
 		} catch (IOException e) {
@@ -221,8 +224,9 @@ public class ImageUtil {
 	 * @return 
 	 */
 	public static byte[] getMatrixRGB(BufferedImage image) {
-		if(null==image)
+		if(null==image){
 			throw new NullPointerException();
+		}
 		byte[] matrixRGB;
 		if(isRGB3Byte(image)){
 			matrixRGB= (byte[]) image.getData().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
@@ -242,8 +246,9 @@ public class ImageUtil {
 	 * @return
 	 */
 	public static byte[] getMatrixBGR(BufferedImage image){
-		if(null==image)
+		if(null==image){
 			throw new NullPointerException();
+		}
 		byte[] matrixBGR;
 		if(isBGR3Byte(image)){
 			matrixBGR= (byte[]) image.getData().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
@@ -269,9 +274,9 @@ public class ImageUtil {
 	 * @see {@link BufferedImage#BufferedImage(int, int, int)}
 	 */
 	public static  BufferedImage copy(Image src,int imageType){
-		if(null==src)
+		if(null==src){
 			throw new NullPointerException("src must not be null");
-		
+		}
 		BufferedImage dst = new BufferedImage(src.getWidth(null), src.getHeight(null),  imageType);
 		Graphics g = dst.getGraphics();
 		try{
@@ -297,11 +302,12 @@ public class ImageUtil {
 	 * @return
 	 */
 	public static BufferedImage scale(BufferedImage src,double scale){
-		if(null==src)
+		if(null==src){
 			throw new NullPointerException("src must not be null");
-		if(0>=scale)
+		}
+		if(0>=scale){
 			throw new IllegalArgumentException("scale must >0");
-
+		}
 		int width = src.getWidth();        // 源图宽   
 		int height = src.getHeight();        // 源图高 
         Image image = src.getScaledInstance((int)Math.round(width * scale), (int)Math.round(height * scale), Image.SCALE_SMOOTH);
@@ -318,10 +324,12 @@ public class ImageUtil {
 	 * @return
 	 */
 	public static BufferedImage growCanvas(Image src,int imageType,int left,int top,int right,int bottom){
-		if(null==src)
+		if(null==src){
 			throw new NullPointerException("src must not be null");
-		if(left<0||top<0||right<0||bottom<0)
+		}
+		if(left<0||top<0||right<0||bottom<0){
 			throw new IllegalArgumentException("left,top,right,bottom must >=0");
+		}
 		BufferedImage dst = new BufferedImage(src.getWidth(null)+left+right, src.getHeight(null)+top+bottom,  imageType);
 		Graphics g = dst.getGraphics();
 		try{
@@ -351,8 +359,9 @@ public class ImageUtil {
 	 * @return
 	 */
 	public static BufferedImage growSquareCanvas(Image src){
-		if(null==src)
+		if(null==src){
 			throw new NullPointerException("src must not be null");
+		}
 		int width=src.getWidth(null);
 		int height=src.getHeight(null);
 		int size=Math.max(width, height);
