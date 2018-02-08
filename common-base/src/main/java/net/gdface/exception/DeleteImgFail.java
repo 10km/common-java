@@ -10,7 +10,8 @@ package net.gdface.exception;
 
 /**删除图像文件失败
  * @author guyadong
- *
+ * @deprecated non-standard class name,instead use {@link DeleteImgFailException}
+ * 
  */
 public class DeleteImgFail extends FACEException {
 

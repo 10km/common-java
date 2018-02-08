@@ -12,6 +12,7 @@ package net.gdface.exception;
  * 图像存储失败
  * 
  * @author guyadong
+ * @deprecated non-standard class name,instead use {@link SaveImgFailException}
  *
  */
 public class SaveImgFail extends FACEException {

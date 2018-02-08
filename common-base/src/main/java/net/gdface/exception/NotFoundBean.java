@@ -12,7 +12,8 @@ package net.gdface.exception;
  * 没有找到记录
  * 
  * @author guyadong
- *
+ * @deprecated non-standard class name,instead use {@link NotFoundBeanException}
+ * 
  */
 public class NotFoundBean extends FACEException {
 

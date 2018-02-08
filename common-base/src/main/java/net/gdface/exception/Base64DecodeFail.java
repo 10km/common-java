@@ -12,6 +12,7 @@ package net.gdface.exception;
  * Base64解码失败
  * 
  * @author guyadong
+ * @deprecated non-standard class name,instead use {@link Base64DecodeFailException}
  *
  */
 public class Base64DecodeFail extends FACEException {

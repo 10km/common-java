@@ -12,7 +12,8 @@ package net.gdface.image;
 /**
  * 不支持的图像格式
  * @author guyadong
- *
+ * @deprecated non-standard class name,instead use {@link UnsupportedFormatException}
+ * 
  */
 public class UnsupportedFormat extends ImageError {
 

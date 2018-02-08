@@ -12,6 +12,7 @@ package net.gdface.exception;
  * 删除记录失败
  * 
  * @author guyadong
+ * @deprecated non-standard class name,instead use {@link DeleteFailException}
  *
  */
 public class DeleteFail extends FACEException {

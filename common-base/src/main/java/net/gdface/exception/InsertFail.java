@@ -12,7 +12,8 @@ package net.gdface.exception;
  * 插入记录失败
  * 
  * @author guyadong
- *
+ * @deprecated non-standard class name,instead use {@link InsertFailException}
+ * 
  */
 public class InsertFail extends FACEException {
 

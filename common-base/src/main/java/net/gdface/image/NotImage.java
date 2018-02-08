@@ -12,7 +12,8 @@ package net.gdface.image;
 /**
  * 非图像数据
  * @author guyadong
- *
+ * @deprecated non-standard class name,instead use {@link NotImageException}
+ * 
  */
 public class NotImage extends ImageError {
 

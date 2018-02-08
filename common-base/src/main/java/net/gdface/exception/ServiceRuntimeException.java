@@ -1,11 +1,3 @@
-/**   
- * @Title: ServiceRuntime.java 
- * @Package net.gdface.service 
- * @Description: TODO 
- * @author guyadong   
- * @date 2015年6月9日 下午4:36:32 
- * @version V1.0   
- */
 package net.gdface.exception;
 
 import java.io.PrintStream;
@@ -16,14 +8,13 @@ import net.gdface.utils.FaceUtilits;
 //</omit-j2cpp>
 /**
  * webservice调用产生的运行时异常<br>
- * 调用webservice方法时产生的所有{@link java.lang.RuntimeException}在抛出到webservice客户时被封装在{@link ServiceRuntime}中<br>
+ * 调用webservice方法时产生的所有{@link java.lang.RuntimeException}在抛出到webservice客户时被封装在{@link ServiceRuntimeException}中<br>
  * 调用 {@link #getServerStackTraceMessage()}可以获取服务器端的堆栈错误信息<br>
  * 调用{@link #printServerStackTrace()}输出服务器端的堆栈错误信息<br>
  * @author guyadong
- * @deprecated non-standard class name,instead use {@link ServiceRuntimeException}
  *
  */
-public class ServiceRuntime extends Exception {
+public class ServiceRuntimeException extends Exception {
 	/**
 	 * 保存服务器端错误堆栈信息
 	 */
@@ -37,13 +28,13 @@ public class ServiceRuntime extends Exception {
 	/**
 	 * 
 	 */
-	public ServiceRuntime() {
+	public ServiceRuntimeException() {
 	}
 
 	/**
 	 * @param message
 	 */
-	public ServiceRuntime(String message) {
+	public ServiceRuntimeException(String message) {
 		super(message);
 	}
 	//<omit-j2cpp>
@@ -51,7 +42,7 @@ public class ServiceRuntime extends Exception {
 	 * @param message
 	 * @param cause
 	 */
-	public ServiceRuntime(String message, Throwable cause) {
+	public ServiceRuntimeException(String message, Throwable cause) {
 		super(message, FaceUtilits.stripThrowableShell(cause, RuntimeException.class));
 		fillStackTraceMessage(getCause());
 	}
@@ -59,7 +50,7 @@ public class ServiceRuntime extends Exception {
 	/**
 	 * @param cause
 	 */
-	public ServiceRuntime(Throwable cause) {
+	public ServiceRuntimeException(Throwable cause) {
 		super(FaceUtilits.stripThrowableShell(cause, RuntimeException.class));
 		fillStackTraceMessage(getCause());
 	}

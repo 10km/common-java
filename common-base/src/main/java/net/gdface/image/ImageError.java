@@ -14,7 +14,8 @@ import net.gdface.exception.FACEException;
  * 获取图像异常
  * 
  * @author guyadong
- *
+ * @deprecated non-standard class name,instead use {@link ImageErrorException}
+ * 
  */
 public class ImageError extends FACEException {
 

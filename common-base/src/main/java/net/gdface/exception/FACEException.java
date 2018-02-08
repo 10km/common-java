@@ -11,6 +11,7 @@ package net.gdface.exception;
 /**
  * 项目中所有异常的基类
  * @author guyadong
+ * @deprecated non-standard class name,instead use {@link BaseFaceException}
  *
  */
 public class FACEException extends Exception {
