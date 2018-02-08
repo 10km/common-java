@@ -85,6 +85,7 @@ public class Judge {
 	 * @param args
 	 * @return true/false
 	 */
+	@SafeVarargs
 	public static final <T extends Collection<?>> boolean hasEmpty(T... args) {
 		for (T e : args) {
 			if (null == e || 0 == e.size())
@@ -134,6 +135,7 @@ public class Judge {
 	 * @param args
 	 * @return true/false
 	 */
+	@SafeVarargs
 	public static final <T> boolean hasEmpty(T[]... args) {
 		for (T[] e : args) {
 			if (null == e || 0 == e.length)
@@ -157,6 +159,7 @@ public class Judge {
 	 * @param args
 	 * @return true/false
 	 */
+	@SafeVarargs
 	public static final <T> boolean hasNull(T... args) {
 		if (null != args) {
 			for (T e : args) {

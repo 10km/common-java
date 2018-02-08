@@ -20,14 +20,8 @@ public class ServiceRuntimeException extends Exception {
 	 */
 	private String serverStackTraceMessage = null;
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6222189909743043773L;
 
-	/**
-	 * 
-	 */
 	public ServiceRuntimeException() {
 	}
 

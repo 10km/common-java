@@ -80,10 +80,10 @@ public class LazyImage {
 	/**
 	 * 通过{@link ImageReader}来读取图像基本信息，检查图像数据有效性
 	 * @return 
-	 * @throws UnsupportedFormat 
-	 * @throws NotImage 
+	 * @throws UnsupportedFormatException 
+	 * @throws NotImageException 
 	 */
-	public LazyImage open() throws UnsupportedFormat, NotImage {
+	public LazyImage open() throws UnsupportedFormatException, NotImageException {
 		try {
 			Iterator<ImageReader> it = ImageIO.getImageReaders(getImageInputstream());
 			if (it.hasNext())
@@ -95,10 +95,10 @@ public class LazyImage {
 					this.height = imageReader.getHeight(0);
 					return this;
 				} catch (Exception e) {
-					throw new UnsupportedFormat(e);
+					throw new UnsupportedFormatException(e);
 				} 
 			else {
-				throw new NotImage();
+				throw new NotImageException();
 			}
 		} finally {
 			if (autoClose)
@@ -118,10 +118,10 @@ public class LazyImage {
 	 *            图像读取参数对象,为null使用默认参数<br>
 	 *            参见 {@link ImageReader#getDefaultReadParam()}
 	 * @return
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 * @see ImageReadParam
 	 */
-	protected BufferedImage read(ImageReadParam param) throws UnsupportedFormat {
+	protected BufferedImage read(ImageReadParam param) throws UnsupportedFormatException {
 		try {
 			if(null==this.bufferedImage||null!=param){
 				ImageReader imageReader=getImageReader();
@@ -135,7 +135,7 @@ public class LazyImage {
 			}
 			return this.bufferedImage;
 		} catch (Exception e) {
-			throw new UnsupportedFormat(e);
+			throw new UnsupportedFormatException(e);
 		} finally {
 			if(autoClose)
 				try {
@@ -164,10 +164,10 @@ public class LazyImage {
 	 *            而直接用BufferedImage.getRGB()方式只能获取ARGB类型的int[]数组 参见
 	 *            {@link ImageReadParam#setDestinationType(ImageTypeSpecifier) }
 	 * @return
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 * @see #read(ImageReadParam)
 	 */
-	public BufferedImage read(Rectangle rect, ImageTypeSpecifier destinationType) throws UnsupportedFormat {
+	public BufferedImage read(Rectangle rect, ImageTypeSpecifier destinationType) throws UnsupportedFormatException {
 		ImageReadParam param = getImageReader().getDefaultReadParam();
 		if (rect != null && !rect.equals(getRectangle()))
 			param.setSourceRegion(rect);
@@ -214,9 +214,9 @@ public class LazyImage {
 	/**
 	 * 对图像解码返回RGB格式矩阵数据
 	 * @return 
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 */
-	public byte[] getMatrixRGB() throws UnsupportedFormat{
+	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
 			matrixRGB=ImageUtil.getMatrixRGB(read(null));
 		}
@@ -225,9 +225,9 @@ public class LazyImage {
 	/**
 	 * 对图像解码返回BGR格式矩阵数据
 	 * @return
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 */
-	public byte[] getMatrixBGR() throws UnsupportedFormat{
+	public byte[] getMatrixBGR() throws UnsupportedFormatException{
 		if (matrixBGR==null){	
 			matrixBGR=ImageUtil.getMatrixBGR(read(null));
 		}
@@ -237,18 +237,18 @@ public class LazyImage {
 	 * 对图像数据指定的区域解码返回RGB格式数据
 	 * @param rect 解码区域,为null时全图解码
 	 * @return 解码的RGB图像矩阵数据
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 */
-	public byte[] getMatrixRGB(Rectangle rect) throws UnsupportedFormat{
+	public byte[] getMatrixRGB(Rectangle rect) throws UnsupportedFormatException{
 		return cutMatrix( getMatrixRGB(),getRectangle(),rect);
 	}
 	/**
 	 * 对图像数据指定的区域解码返回BGR格式数据
 	 * @param rect 解码区域,为null时全图解码
 	 * @return 解码的RGB图像矩阵数据
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 */
-	public byte[] getMatrixBGR(Rectangle rect) throws UnsupportedFormat{
+	public byte[] getMatrixBGR(Rectangle rect) throws UnsupportedFormatException{
 		return cutMatrix( getMatrixBGR(),getRectangle(),rect);
 	}
 	/**
@@ -281,9 +281,9 @@ public class LazyImage {
 	 *  对图像数据指定的区域解码返回灰度图像数据
 	 * @param rect 解码区域,为null时全图解码
 	 * @return 灰度图像矩阵数据
-	 * @throws UnsupportedFormat
+	 * @throws UnsupportedFormatException
 	 */
-	public byte[] getMatrixGray(Rectangle rect) throws UnsupportedFormat{		
+	public byte[] getMatrixGray(Rectangle rect) throws UnsupportedFormatException{		
 		if(null==matrixGray){
 			BufferedImage image = read(null);
 			if(image.getType()==BufferedImage.TYPE_BYTE_GRAY){
@@ -317,12 +317,12 @@ public class LazyImage {
 	 * 创建并打开对象
 	 * @param imgBytes
 	 * @return
-	 * @throws NotImage
-	 * @throws UnsupportedFormat
+	 * @throws NotImageException
+	 * @throws UnsupportedFormatException
 	 * @see #LazyImage(byte[])
 	 * @see #open()
 	 */
-	public static LazyImage create(final byte[] imgBytes) throws NotImage, UnsupportedFormat {
+	public static LazyImage create(final byte[] imgBytes) throws NotImageException, UnsupportedFormatException {
 		return new LazyImage(imgBytes).open();
 	}
 	/**
@@ -330,10 +330,10 @@ public class LazyImage {
 	 * @param file
 	 * @param md5 {@code file}的MD5较验码，可以为null
 	 * @return
-	 * @throws NotImage
-	 * @throws UnsupportedFormat
+	 * @throws NotImageException
+	 * @throws UnsupportedFormatException
 	 */
-	public static LazyImage create(final File file, String md5) throws NotImage, UnsupportedFormat {
+	public static LazyImage create(final File file, String md5) throws NotImageException, UnsupportedFormatException {
 		try {
 			return new LazyImage(file, md5).open();
 		} catch (FileNotFoundException e) {
@@ -345,12 +345,12 @@ public class LazyImage {
 	 * 多源创建对象
 	 * @param src
 	 * @return
-	 * @throws NotImage
-	 * @throws UnsupportedFormat
+	 * @throws NotImageException
+	 * @throws UnsupportedFormatException
 	 * @see #LazyImage(Object)
 	 * @see FaceUtilits#getBytesNotEmpty(Object)
 	 */
-	public static <T> LazyImage create(final T src) throws NotImage, UnsupportedFormat {
+	public static <T> LazyImage create(final T src) throws NotImageException, UnsupportedFormatException {
 		try {
 			return new LazyImage(src).open();
 		} catch (IOException e) {
@@ -549,7 +549,7 @@ public class LazyImage {
 		return rectangle;
 	}
 	
-	public static void main(String args[]) throws FileNotFoundException, IOException, NotImage, UnsupportedFormat {
+	public static void main(String args[]) throws FileNotFoundException, IOException, NotImageException, UnsupportedFormatException {
 		byte[] imgBytes = FaceUtilits.getBytesNotEmpty(new File("D:\\tmp\\guyadong-1.jpg"));
 		// LazyImage img = createInstance(imgBytes);
 		//LazyImage img = new LazyImage(new File("D:\\tmp\\guyadong-1.jpg"), null);

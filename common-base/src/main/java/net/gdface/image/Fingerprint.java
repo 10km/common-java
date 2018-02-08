@@ -43,15 +43,15 @@ public final class Fingerprint {
 		byte[] matrixGray = (byte[]) toGray(hashImage).getData().getDataElements(0, 0, HASH_SIZE, HASH_SIZE, null);	
 		return  binaryzation(matrixGray);
 	}
-	public static <T> Fingerprint createFromImage(T src) throws UnsupportedFormat, NotImage{
+	public static <T> Fingerprint createFromImage(T src) throws UnsupportedFormatException, NotImageException{
 		return  null==src?null:new Fingerprint(LazyImage.create(src).read(null, null));	
 	}
 	public static <T> Fingerprint createFromImageNoThrow(T src) {
 		try {
 			return  createFromImage(src);
-		} catch (UnsupportedFormat e) {
+		} catch (UnsupportedFormatException e) {
 			throw new RuntimeException(e);
-		} catch (NotImage e) {
+		} catch (NotImageException e) {
 			throw new RuntimeException(e);
 		}	
 	}
