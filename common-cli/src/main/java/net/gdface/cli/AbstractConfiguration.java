@@ -18,8 +18,9 @@ public abstract class AbstractConfiguration extends Context implements CommonCli
 		Option opt;
 		String key;
 		Map<String, Object> defaultMap = getDefaultValueMap();
-		if (defaultMap == null)
+		if (defaultMap == null){
 			defaultMap = new HashMap<String, Object>();
+		}
 		while (it.hasNext()) {
 			opt = it.next();
 			// 优先用长值
