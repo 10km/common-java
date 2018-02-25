@@ -49,8 +49,9 @@ public class FaceUtilits {
 	 * @return
 	 */
 	static public byte[] getMD5(byte[] source) {
-		if (Judge.isNull(source))
+		if (Judge.isNull(source)){
 			return null;
+		}
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			return md.digest(source);
@@ -64,7 +65,9 @@ public class FaceUtilits {
 	 * @return buffer 为 null 时返回 null 
 	 */
 	public static final byte[] getBytesInBuffer(ByteBuffer buffer){
-		if(null == buffer)return null;
+		if(null == buffer){
+			return null;
+		}
 		int pos = buffer.position();
 		try{
 			byte[] bytes = new byte[buffer.remaining()];
@@ -90,8 +93,9 @@ public class FaceUtilits {
 	 * @return
 	 */
 	static public String toHex(byte[] buffer) {
-		if (Judge.isNull(buffer))
+		if (Judge.isNull(buffer)){
 			return null;
+		}
 		StringBuffer sb = new StringBuffer(buffer.length * 2);
 		for (int i = 0; i < buffer.length; i++) {
 			sb.append(Character.forDigit((buffer[i] & 240) >> 4, 16));
@@ -170,8 +174,9 @@ public class FaceUtilits {
 	 */
 	public static byte[] readBytes(InputStream in) throws IOException, IllegalArgumentException {
 		Assert.notNull(in, "in");
-		if(in instanceof FileInputStream)
+		if(in instanceof FileInputStream){
 			return readBytes((FileInputStream)in);
+		}
 		try {
 			int buffSize = Math.max(in.available(), 1024*8);
 			byte[] temp = new byte[buffSize];
@@ -202,8 +207,9 @@ public class FaceUtilits {
 			bb.flip();
 			return bb.array();
 		} finally {
-			if (null != fc)
+			if (null != fc){
 				fc.close();
+			}
 			fin.close();
 		}
 	}
@@ -219,9 +225,9 @@ public class FaceUtilits {
 	 */
 	public static <T> InputStream getInputStream(T src) throws IOException, IllegalArgumentException {
 		Assert.notNull(src, "src");
-		if (src instanceof InputStream)
+		if (src instanceof InputStream){
 			return (InputStream) src;
-		else if (src instanceof String) {
+		}else if (src instanceof String) {
 			return new ByteArrayInputStream(Base64Utils.decode(((String) src)));
 		} else if (src instanceof byte[]) {
 			return new ByteArrayInputStream((byte[]) src);
@@ -233,9 +239,10 @@ public class FaceUtilits {
 			return ((URL) src).openStream();
 		} else if (src instanceof URI) {
 			return ((URI) src).toURL().openStream();
-		} else
+		} else{
 			throw new IllegalArgumentException(String.format("Can't get inputstream from [%s]", src.getClass()
 					.getCanonicalName()));
+		}
 	}
 
 	/**
@@ -284,9 +291,10 @@ public class FaceUtilits {
 	 */
 	static public final <T> byte[] getBytesNotEmpty(T src) throws IOException, IllegalArgumentException {
 		byte[] imgData = getBytes(src);
-		if (Judge.isEmpty(imgData))
+		if (Judge.isEmpty(imgData)){
 			throw new IOException(String.format("return null or zero length from %s", src.getClass()
 					.getSimpleName()));
+		}
 		return imgData;
 	}
 	/**
@@ -364,11 +372,13 @@ public class FaceUtilits {
 		FileChannel fc = null;
 		try {
 			File folder = file.getParentFile();
-			if (!folder.exists())
+			if (!folder.exists()){
 				folder.mkdirs();
+			}
 			long free = folder.getFreeSpace()>>20;//可用磁盘空间(MB)
-			if(free<10)
+			if(free<10){
 				throw new IOException(String.format("DISK ALMOST FULL(磁盘空间不足) FREE %dMB,%s",free,folder.getAbsolutePath()));
+			}
 			if (!file.exists() || !file.isFile() || overwrite) {
 				out = new FileOutputStream(file);
 				fc = out.getChannel();
@@ -377,10 +387,12 @@ public class FaceUtilits {
 			}
 			return file;
 		} finally {
-			if (null != fc)
+			if (null != fc){
 				fc.close();
-			if (null != out)
+			}
+			if (null != out){
 				out.close();
+			}
 		}
 	}
 	
@@ -408,16 +420,19 @@ public class FaceUtilits {
 	 */
 	public static  Class<?>[] getParameterizedType(Class<?>clazz) throws MalformedParameterizedTypeException, IllegalArgumentException{
 		Type partype = clazz.getGenericSuperclass();		
-		if(!(partype instanceof ParameterizedType))//超类不是泛型
+		if(!(partype instanceof ParameterizedType)){
+			//超类不是泛型
 			throw new IllegalArgumentException(String.format("superclass of %s  not ParameterizedType(超类不是泛型类)",clazz.getName()));
+		}
 		Type[] types = ((ParameterizedType) partype).getActualTypeArguments();
 		if(!(types[0] instanceof Class<?>)){
 			System.err.print("cant'not get class for ParameterizedType (无法获取实际泛型参数对象类型(Class))");
 			throw new MalformedParameterizedTypeException();
 		} 
 		Class<?>[] paramClass=new Class<?>[types.length];		
-		for(int i=0;i<paramClass.length;i++)
+		for(int i=0;i<paramClass.length;i++){
 			paramClass[i]=(Class<?>) types[i];
+		}
 		return paramClass;		
 	}
 
@@ -449,16 +464,18 @@ public class FaceUtilits {
 	public static  void storeSortedMap(Map<String,String> map,Writer writer, String lineSeparator)  throws IOException {
 		Assert.notNull(writer, "writer");
 		TreeMap<String, String> sortedMap = new TreeMap<String,String>();
-		if(null!=map)
+		if(null!=map){
 			sortedMap.putAll(map);
+		}
 		BufferedWriter bw=(writer instanceof BufferedWriter)?(BufferedWriter)writer
 				: new BufferedWriter(writer);
 		for (Entry<String,String> e:sortedMap.entrySet()) {
 			bw.write(e.getKey() + "=" + e.getValue());
-			if(null==lineSeparator)
+			if(null==lineSeparator){
 				bw.newLine();
-			else
+			}else{
 				bw.write("\n");
+			}
 		}
 		bw.flush();
 	}
@@ -474,16 +491,18 @@ public class FaceUtilits {
 	public static  void storeSortedSet(Collection<String> collection,Writer writer, String lineSeparator)  throws IOException {
 		Assert.notNull(writer, "writer");
 		TreeSet<String> sortedSet = new TreeSet<String>();
-		if(null!=collection)
+		if(null!=collection){
 			sortedSet.addAll(collection);
+		}
 		BufferedWriter bw=(writer instanceof BufferedWriter)?(BufferedWriter)writer
 				: new BufferedWriter(writer);
 		for (String e:sortedSet) {			
 			bw.write(e);
-			if(null==lineSeparator)
+			if(null==lineSeparator){
 				bw.newLine();
-			else
+			}else{
 				bw.write("\n");
+			}
 		}
 		bw.flush();
 	}
@@ -495,18 +514,31 @@ public class FaceUtilits {
 	 * @return
 	 */
 	public static <K,V>boolean equals(Map<K,V> m1,Map<K,V> m2){
-		if(m1==m2)return true;
-		if(null ==m1 || null ==m2)return false;
-		if(m1.size() != m2.size())return false;
+		if(m1==m2){
+			return true;
+		}
+		if(null ==m1 || null ==m2){
+			return false;
+		}
+		if(m1.size() != m2.size()){
+			return false;
+		}
 		for(Entry<K, V> entry:m1.entrySet()){
 			K key = entry.getKey();
-			if(!m2.containsKey(key))return false;
+			if(!m2.containsKey(key)){
+				return false;
+			}
 			V v1 = entry.getValue();
 			V v2 = m2.get(key);
-			if(v1 ==v2 ) continue;
-			if(null ==v1 || null ==v2)return false;
-			if(!v1.equals(v2))
+			if(v1 ==v2 ) {
+				continue;
+			}
+			if(null ==v1 || null ==v2){
 				return false;
+			}
+			if(!v1.equals(v2)){
+				return false;
+			}
 		}
 		return true;
 	}
