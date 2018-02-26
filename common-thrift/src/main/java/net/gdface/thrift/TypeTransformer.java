@@ -1,6 +1,7 @@
 package net.gdface.thrift;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Date;
@@ -160,8 +161,14 @@ public class TypeTransformer {
 			return null == input ? null : Booleans.toArray(input);
 		}};
 	private final Table<Class<?>,Class<?>,Function<?,?>> transTable = HashBasedTable.create();
-
-	public TypeTransformer() {
+	private static TypeTransformer instance = new TypeTransformer();
+	public static synchronized TypeTransformer getInstance() {
+		return instance;
+	}
+	public static synchronized void setInstance(TypeTransformer instance) {
+		TypeTransformer.instance = checkNotNull(instance,"instance is null");
+	}
+	protected TypeTransformer() {
 		transTable.put(byte[].class,ByteBuffer.class,byteArray2ByteBufferFun);
 		transTable.put(ByteBuffer.class,byte[].class,byteBuffer2ByteArrayFun);
 		transTable.put(Float.class,Double.class,float2DoubleFun);
@@ -187,6 +194,13 @@ public class TypeTransformer {
 		transTable.put(List.class,short[].class,list2shortArray);
 		transTable.put(List.class,boolean[].class,list2booleanArray);
 	}
+	/**
+	 * 设置{@code left -> right}的转换器，参数不可为{@code null}
+	 * @param left
+	 * @param right
+	 * @param trans 转换器对象
+	 * @return
+	 */
 	public <L,R>TypeTransformer setTransformer(Class<L> left, Class<R> right, Function<L, R> trans){
 		checkArgument(null != left && null != right && null != trans,"left, right, trans must not be null");
 		synchronized (this.transTable) {
@@ -194,15 +208,23 @@ public class TypeTransformer {
 			return this;
 		}
 	}
+	/**
+	 * 返回{@code left & right}指定的转换器，参数不可为{@code null}
+	 * @param left
+	 * @param right
+	 * @return
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <L,R>Function<L,R> getTransformer(Class<L>left,Class<R>right){
 		checkArgument(null != left && null != right,"left, right must not be null");
 		if(right.isAssignableFrom(left)){
+			// 相同类型转换
 			return (Function<L,R>)this.sameTypeFun;
 		}
 		Function<L, R> result = (Function<L, R>) this.transTable.get(left, right);
 		if (null == result) {
 			if (Enum.class.isAssignableFrom(left) && Enum.class.isAssignableFrom(left)) {
+				// 添加枚举类型转换
 				synchronized (this.transTable) {
 					// double checking
 					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
@@ -212,6 +234,7 @@ public class TypeTransformer {
 					}
 				}
 			}else if(isThriftStruct(left) && isThriftStruct(right)){
+				// 添加 ThriftStuct对象之间的转换
 				synchronized (this.transTable) {
 					// double checking
 					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
@@ -219,9 +242,42 @@ public class TypeTransformer {
 						setTransformer(left, right, (Function<L,R>)trans);
 					}
 				}
+			}else if(isThriftDecoratorPair(left,right) ){
+				// 添加thrift decorator对象和被装饰对象之间的转换	
+				result = updateThriftDecoatorTransformer(right,(Class<? extends ThriftDecorator>)left);
+			}else if(isThriftDecoratorPair(right,left) ){
+				// 添加thrift decorator对象和被装饰对象之间的转换	
+				result = updateThriftDecoatorTransformer(left,(Class<? extends ThriftDecorator>)right);
 			}
 		}
 		return result;
+	}
+	/**
+	 * 判断 {@code left & right}之间是否为装饰类和被装饰类关系
+	 * @param left 装饰类
+	 * @param right 补装饰类
+	 * @return
+	 */
+	private <L,R>boolean isThriftDecoratorPair(Class<L>left,Class<R>right){
+		try {
+			return isThriftDecorator(left) 
+					&& left.getMethod("delegate").getReturnType() == right;
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	private <L,R extends ThriftDecorator<L>>Function<L,R> updateThriftDecoatorTransformer(Class<L>left,Class<R>right){
+		synchronized (this.transTable) {
+			Function<L, R> result;
+			// double checking
+			if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
+				ThriftDecoratorTransformer<L,R> trans = new ThriftDecoratorTransformer<L,R>(left,right);
+				setTransformer(left, right, trans.toDecoratorFun);
+				setTransformer(right,left, trans.toDelegateFun);
+			}
+			return result;
+		}
 	}
 	public Function<?,?> getTransformerChecked(Class<?>left,Class<?>right){
 		return checkNotNull(getTransformer(left,right),"not found transformer for %s to %s",left,right);
@@ -331,6 +387,11 @@ public class TypeTransformer {
 			}
 		}		
 	}
+	public static boolean isThriftDecorator(Type type){
+		return type instanceof Class<?> 
+				? ThriftDecorator.class.isAssignableFrom((Class<?>)type) 
+				: false;
+	}
     /** 
      * convert {@code Map<K1,V>} to {@code Map<K2,V>}   
      * @return {@linkplain ImmutableMap}
@@ -352,12 +413,4 @@ public class TypeTransformer {
             }});
         return k2V;
     }
-    public static void main(String[] args){
-		TypeTransformer trans = new TypeTransformer();
-		List<Long> result = trans.to(Arrays.asList(new Date()),Date.class, Long.class);
-		for(Long element:result){
-			System.out.println(element);
-		}
-		System.out.println(trans.to(Arrays.asList(0.7f),Float.class, Double.class));
-	}
 }
