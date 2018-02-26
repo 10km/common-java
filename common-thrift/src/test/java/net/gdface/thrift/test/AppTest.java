@@ -1,4 +1,4 @@
-package com.gitee.l0km;
+package net.gdface.thrift.test;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
