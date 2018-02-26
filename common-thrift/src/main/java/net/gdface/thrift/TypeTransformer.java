@@ -162,7 +162,7 @@ public class TypeTransformer {
 		}};
 	private final Table<Class<?>,Class<?>,Function<?,?>> transTable = HashBasedTable.create();
 	private static TypeTransformer instance = new TypeTransformer();
-	public static synchronized TypeTransformer getInstance() {
+	public static TypeTransformer getInstance() {
 		return instance;
 	}
 	public static synchronized void setInstance(TypeTransformer instance) {
