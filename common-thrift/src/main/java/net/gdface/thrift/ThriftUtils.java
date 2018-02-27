@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -341,5 +343,21 @@ public class ThriftUtils {
 		} else{
 			throw new IllegalArgumentException(String.format("not allow type %s", type.toString()));
 		}
+	}
+	@SuppressWarnings("serial")
+	public static <K, V> TypeToken<Map<K, V>> mapToken(TypeToken<K> keyToken, TypeToken<V> valueToken) {
+		  return new TypeToken<Map<K, V>>() {}
+		    .where(new TypeParameter<K>() {}, keyToken)
+		    .where(new TypeParameter<V>() {}, valueToken);
+	}
+	@SuppressWarnings("serial")
+	public static <T> TypeToken<List<T>> listToken(TypeToken<T> keyToken) {
+		  return new TypeToken<List<T>>() {}
+		    .where(new TypeParameter<T>() {}, keyToken);
+	}
+	@SuppressWarnings("serial")
+	public static <T> TypeToken<Set<T>> setToken(TypeToken<T> keyToken) {
+		  return new TypeToken<Set<T>>() {}
+		    .where(new TypeParameter<T>() {}, keyToken);
 	}
 }
