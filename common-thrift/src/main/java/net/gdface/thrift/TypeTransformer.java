@@ -1,7 +1,6 @@
 package net.gdface.thrift;
 
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Date;
@@ -27,7 +26,7 @@ import com.google.common.primitives.Longs;
 import com.google.common.primitives.Shorts;
 
 import static com.google.common.base.Preconditions.*;
-import static net.gdface.thrift.ThriftStructTransformer.isThriftStruct;
+import static net.gdface.thrift.ThriftUtils.*;
 /**
  * 类型转换工具类
  * @author guyadong
@@ -238,7 +237,12 @@ public class TypeTransformer {
 				synchronized (this.transTable) {
 					// double checking
 					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
-						ThriftStructTransformer trans = new ThriftStructTransformer(left,right);
+						Function<L,R> trans;
+						if(isThriftException(left,right)){
+							trans = new ThriftExceptionTransformer(left,right);
+						}else{
+							trans = new ThriftStructTransformer(left,right);
+						}
 						setTransformer(left, right, (Function<L,R>)trans);
 					}
 				}
@@ -260,7 +264,7 @@ public class TypeTransformer {
 	 */
 	private <L,R>boolean isThriftDecoratorPair(Class<L>left,Class<R>right){
 		try {
-			return isThriftDecorator(left) 
+			return ThriftUtils.isThriftDecorator(left) 
 					&& left.getMethod("delegate").getReturnType() == right;
 		} catch (NoSuchMethodException e) {
 			throw new RuntimeException(e);
@@ -387,12 +391,7 @@ public class TypeTransformer {
 			}
 		}		
 	}
-	public static boolean isThriftDecorator(Type type){
-		return type instanceof Class<?> 
-				? ThriftDecorator.class.isAssignableFrom((Class<?>)type) 
-				: false;
-	}
-    /** 
+	/** 
      * convert {@code Map<K1,V>} to {@code Map<K2,V>}   
      * @return {@linkplain ImmutableMap}
      */

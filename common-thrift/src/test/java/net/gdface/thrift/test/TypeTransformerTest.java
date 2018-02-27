@@ -8,7 +8,11 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+
 import net.gdface.thrift.TypeTransformer;
+import net.gdface.thrift.exception.ServiceRuntimeException;
 
 public class TypeTransformerTest {
 
@@ -21,5 +25,10 @@ public class TypeTransformerTest {
 		}
 		System.out.println(trans.to(Arrays.asList(0.7f),Float.class, Double.class));
 	}
-
+	@Test
+	public void test2(){
+		ThriftCatalog catalog = new ThriftCatalog();
+		ThriftStructMetadata metadata = catalog.getThriftStructMetadata(ServiceRuntimeException.class);
+		System.out.println(metadata);
+	}
 }
