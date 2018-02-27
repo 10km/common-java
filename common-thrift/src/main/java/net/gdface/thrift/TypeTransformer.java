@@ -310,7 +310,7 @@ public class TypeTransformer {
 				: Sets.newHashSet(Iterables.transform(input, (Function<L,R>)this.getTransformerChecked(left, right)));
 	}
 	@SuppressWarnings("unchecked")
-	public <L,R> List<R> toList(L[] input,Class<L> left,Class<R> right){
+	public <L,R> List<R> to(L[] input,Class<L> left,Class<R> right){
 		if(null == input){
 			return null;
 		}
