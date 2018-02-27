@@ -6,8 +6,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
@@ -301,5 +305,41 @@ public class ThriftUtils {
 	}
 	public static boolean isThriftException(Type left, Type right){
 		return isThriftException(left) && isThriftException(right);
+	}
+
+	public static boolean needTransformer(Type type){
+		return !isThriftBuildinType(type) && ! isPrimitivefloat(type);
+	}
+	public static interface Action{
+		void doClass(Class<?> type);
+	}
+	public static void traverseTypes(Type type,Action action){
+		checkArgument(null !=action,"action is null");
+		if(type instanceof Class<?>){
+			action.doClass((Class<?>) type);
+		}else if( type instanceof ParameterizedType){
+			ParameterizedType paramType = (ParameterizedType)type;
+			Type rawType = paramType.getRawType();
+			Type[] typeArgs = paramType.getActualTypeArguments();
+			traverseTypes(rawType,action);
+			for(Type arg:typeArgs){
+				traverseTypes(arg,action);
+			}
+		}else if (type instanceof GenericArrayType) {
+			traverseTypes(((GenericArrayType) type).getGenericComponentType(),action);
+		} else if (type instanceof TypeVariable) {
+			for (Type t : ((TypeVariable<?>) type).getBounds()) {
+				traverseTypes(t,action);
+			}
+		} else if (type instanceof WildcardType) {
+			for (Type t : ((WildcardType) type).getLowerBounds()) {
+				traverseTypes(t,action);
+			}
+			for (Type t : ((WildcardType) type).getUpperBounds()) {
+				traverseTypes(t,action);
+			}
+		} else{
+			throw new IllegalArgumentException(String.format("not allow type %s", type.toString()));
+		}
 	}
 }
