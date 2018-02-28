@@ -248,10 +248,12 @@ public class TypeTransformer {
 				}
 			}else if(isThriftDecoratorPair(left,right) ){
 				// 添加thrift decorator对象和被装饰对象之间的转换	
-				result = updateThriftDecoatorTransformer(right,(Class<? extends ThriftDecorator>)left);
+				updateThriftDecoatorTransformer(right,(Class<? extends ThriftDecorator>)left);
+				result = (Function<L, R>) this.transTable.get(left, right);
 			}else if(isThriftDecoratorPair(right,left) ){
 				// 添加thrift decorator对象和被装饰对象之间的转换	
-				result = updateThriftDecoatorTransformer(left,(Class<? extends ThriftDecorator>)right);
+				updateThriftDecoatorTransformer(left,(Class<? extends ThriftDecorator>)right);
+				result = (Function<L, R>) this.transTable.get(left, right);
 			}
 		}
 		return result;
@@ -271,16 +273,14 @@ public class TypeTransformer {
 		}
 	}
 	@SuppressWarnings("unchecked")
-	private <L,R extends ThriftDecorator<L>>Function<L,R> updateThriftDecoatorTransformer(Class<L>left,Class<R>right){
+	private <L,R extends ThriftDecorator<L>>void updateThriftDecoatorTransformer(Class<L>left,Class<R>right){
 		synchronized (this.transTable) {
-			Function<L, R> result;
 			// double checking
-			if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
+			if (null == this.transTable.get(left, right)) {
 				ThriftDecoratorTransformer<L,R> trans = new ThriftDecoratorTransformer<L,R>(left,right);
 				setTransformer(left, right, trans.toDecoratorFun);
 				setTransformer(right,left, trans.toDelegateFun);
 			}
-			return result;
 		}
 	}
 	public Function<?,?> getTransformerChecked(Class<?>left,Class<?>right){
