@@ -72,15 +72,14 @@ public class ThriftUtils {
 			Long.class,
 			Double.class);
 	public static final Map<Class<?>,Class<?>> CAST_TYPES = 
-	ImmutableMap.<Class<?>,Class<?>>builder()
-	.put(byte[].class,ByteBuffer.class)
-	.put(Date.class,Long.class)
-	.put(java.sql.Date.class,Long.class)
-	.put(java.sql.Time.class,Long.class)
-	.put(float.class,double.class)
-	.put(Float.class,Double.class)
-	.build();
-
+		ImmutableMap.<Class<?>,Class<?>>builder()
+			.put(byte[].class,ByteBuffer.class)
+			.put(Date.class,Long.class)
+			.put(java.sql.Date.class,Long.class)
+			.put(java.sql.Time.class,Long.class)
+			.put(float.class,double.class)
+			.put(Float.class,Double.class)
+			.build();
 	public ThriftUtils() {
 	}
 
