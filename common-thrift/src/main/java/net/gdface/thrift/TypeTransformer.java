@@ -227,9 +227,9 @@ public class TypeTransformer {
 				synchronized (this.transTable) {
 					// double checking
 					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
-						EnumTransformer<?, ?> trans = new EnumTransformer((Class<? extends Enum<?>>) left,
+						result = new EnumTransformer((Class<? extends Enum<?>>) left,
 								(Class<? extends Enum<?>>) right);
-						setTransformer(left, right, (Function<L,R>)trans);
+						setTransformer(left, right, (Function<L,R>)result);
 					}
 				}
 			}else if(isThriftStruct(left) && isThriftStruct(right)){
@@ -237,13 +237,12 @@ public class TypeTransformer {
 				synchronized (this.transTable) {
 					// double checking
 					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
-						Function<L,R> trans;
 						if(isThriftException(left,right)){
-							trans = new ThriftExceptionTransformer(left,right);
+							result = new ThriftExceptionTransformer(left,right);
 						}else{
-							trans = new ThriftStructTransformer(left,right);
+							result = new ThriftStructTransformer(left,right);
 						}
-						setTransformer(left, right, (Function<L,R>)trans);
+						setTransformer(left, right, result);
 					}
 				}
 			}else if(isThriftDecoratorPair(left,right) ){
@@ -272,7 +271,6 @@ public class TypeTransformer {
 			throw new RuntimeException(e);
 		}
 	}
-	@SuppressWarnings("unchecked")
 	private <L,R extends ThriftDecorator<L>>void updateThriftDecoatorTransformer(Class<L>left,Class<R>right){
 		synchronized (this.transTable) {
 			// double checking
