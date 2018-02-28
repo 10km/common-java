@@ -2,7 +2,7 @@ package net.gdface.thrift;
 
 import static com.facebook.swift.codec.metadata.DecoratorThriftStructMetadata.STRUCT_TRANSFORMER;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
 
 import java.lang.reflect.Constructor;
@@ -80,6 +80,9 @@ public class ThriftUtils {
 			.put(float.class,double.class)
 			.put(Float.class,Double.class)
 			.build();
+	public static final String DECORATOR_PKG_SUFFIX="decorator";
+	public static final String CLIENT_SUFFIX="client";
+	public static final String DECORATOR_CLIENT_PKG_SUFFIX= DECORATOR_PKG_SUFFIX + "." + CLIENT_SUFFIX;
 	public ThriftUtils() {
 	}
 
@@ -358,5 +361,82 @@ public class ThriftUtils {
 	public static <T> TypeToken<Set<T>> setToken(TypeToken<T> keyToken) {
 		  return new TypeToken<Set<T>>() {}
 		    .where(new TypeParameter<T>() {}, keyToken);
+	}
+
+	public static boolean hasDecoratorType(Type type){
+		return getDecoratorType(type) !=null;
+	}
+	@SuppressWarnings("unchecked")
+	public static <T>Class<? extends ThriftDecorator<T>> getDecoratorType(Type type){
+		if(!isThriftStruct(type)){
+			return getDecoratorType((Class<T>)type);
+		}
+		return null;
+	}
+	@SuppressWarnings("unchecked")
+	public static <T,D extends ThriftDecorator<T>>Class<D> getDecoratorType(Class<T> clazz){
+		if(!isThriftStruct(clazz)){
+			String decoratorClazzName = clazz.getPackage().getName() 
+					+ DECORATOR_CLIENT_PKG_SUFFIX 
+					+ "." 
+					+ clazz.getSimpleName();
+			try {
+				Class<?> decoratorClazz = Class.forName(decoratorClazzName);
+				checkState(isThriftDecoratorPair(decoratorClazz,clazz),
+						"%s must immplement %s",
+						decoratorClazz.getName(),
+						ThriftDecorator.class.getName());
+				return (Class<D>) decoratorClazz;
+			} catch (ClassNotFoundException e) {
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 判断 {@code left & right}之间是否为装饰类和被装饰类关系
+	 * @param left 装饰类
+	 * @param right 补装饰类
+	 * @return
+	 */
+	public static <L,R>boolean isThriftDecoratorPair(Class<L>left,Class<R>right){
+		try {
+			return isThriftDecorator(left) 
+					&& left.getMethod("delegate").getReturnType() == right;
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * 判断 {@code right}是否为{@code left}对应的client端存根类型
+	 * @param left
+	 * @param right
+	 * @return
+	 */
+	public static <L,R>boolean isThriftClientPair(Class<L>left,Class<R>right){
+		return getMiddleClass(left,right)!=null;
+	}
+	/**
+	 * 返回 {@code left & right}之间的decorator类型
+	 * @param left 原始类型
+	 * @param right {@code left}对应的client端存根类型
+	 * @return
+	 */
+	public static <L,M extends ThriftDecorator<L>,R>Class<M> getMiddleClass(Class<L>left,Class<R>right){
+		if(isThriftStruct(right)){
+			Class<M> decoratorClass = getDecoratorType(left);
+			if(null != decoratorClass && decoratorClass.getSimpleName().equals(left.getSimpleName())){
+				return decoratorClass;
+			}			
+		}
+		return null;
+	}
+	@SuppressWarnings("unchecked")
+	public static <L,M extends ThriftDecorator<L>,R>Class<M> getMiddleClassChecked(Class<L>left,Class<R>right){
+		return (Class<M>) checkNotNull(
+						getMiddleClass(left,right),
+						"NOT FOUND decorator class for %s",
+						left.getName());
 	}
 }

@@ -253,24 +253,22 @@ public class TypeTransformer {
 				// 添加thrift decorator对象和被装饰对象之间的转换	
 				updateThriftDecoatorTransformer(left,(Class<? extends ThriftDecorator>)right);
 				result = (Function<L, R>) this.transTable.get(left, right);
+			}else if(isThriftClientPair(left,right)){
+				// 添加原始对象和thrift decorator对象之间的转换	
+				updateThriftClientTypeTransformer(left,right);
+				result = (Function<L, R>) this.transTable.get(left, right);
+			}else if(isThriftClientPair(right,left)){
+				// 添加原始对象和thrift decorator对象之间的转换	
+				updateThriftClientTypeTransformer(right,left);
+				result = (Function<L, R>) this.transTable.get(left, right);
 			}
 		}
 		return result;
 	}
-	/**
-	 * 判断 {@code left & right}之间是否为装饰类和被装饰类关系
-	 * @param left 装饰类
-	 * @param right 补装饰类
-	 * @return
-	 */
-	private <L,R>boolean isThriftDecoratorPair(Class<L>left,Class<R>right){
-		try {
-			return ThriftUtils.isThriftDecorator(left) 
-					&& left.getMethod("delegate").getReturnType() == right;
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
+	public <L,R>Function<L,R> getTransformerChecked(Class<L>left,Class<R>right){
+		return checkNotNull(getTransformer(left,right),"not found transformer for %s to %s",left,right);
 	}
+
 	private <L,R extends ThriftDecorator<L>>void updateThriftDecoatorTransformer(Class<L>left,Class<R>right){
 		synchronized (this.transTable) {
 			// double checking
@@ -281,10 +279,16 @@ public class TypeTransformer {
 			}
 		}
 	}
-	public Function<?,?> getTransformerChecked(Class<?>left,Class<?>right){
-		return checkNotNull(getTransformer(left,right),"not found transformer for %s to %s",left,right);
+	private <L,M extends ThriftDecorator<L>,R>void updateThriftClientTypeTransformer(Class<L>left,Class<R>right){
+		synchronized (this.transTable) {
+			// double checking
+			if (null == this.transTable.get(left, right)) {
+				ThriftClientTypeTransformer<L, M, R> trans = new ThriftClientTypeTransformer<L,M,R>(left,right);
+				setTransformer(left, right, trans.toThriftClientTypeFun);
+				setTransformer(right,left, trans.toOriginalTypeFun);
+			}
+		}
 	}
-
 	@SuppressWarnings("unchecked")
 	public <L,R> R to (L value,Class<L>left,Class<R> right){
 		if(null == value){
@@ -293,19 +297,17 @@ public class TypeTransformer {
 		if(checkNotNull(right,"right is null").isInstance(value)){
 			return (R) value;
 		}
-		return ((Function<L,R>)this.getTransformerChecked(left, right)).apply(value);
+		return this.getTransformerChecked(left, right).apply(value);
 	}
-	@SuppressWarnings("unchecked")
 	public <L,R>List<R> to(List<L> input,Class<L> left, Class<R> right){
 		return null == input 
 				? null 
-				: Lists.transform(input, (Function<L,R>)this.getTransformerChecked(left, right));
+				: Lists.transform(input, this.getTransformerChecked(left, right));
 	}
-	@SuppressWarnings("unchecked")
 	public <L,R> Set<R> to(Set<L> input,Class<L> left, Class<R> right){
 		return null == input 
 				? null 
-				: Sets.newHashSet(Iterables.transform(input, (Function<L,R>)this.getTransformerChecked(left, right)));
+				: Sets.newHashSet(Iterables.transform(input, this.getTransformerChecked(left, right)));
 	}
 	@SuppressWarnings("unchecked")
 	public <L,R> List<R> to(L[] input,Class<L> left,Class<R> right){
@@ -379,13 +381,13 @@ public class TypeTransformer {
 			if(v1 == v2){
 				return (Map<K2, V2>) input;
 			}
-			return (Map<K2, V2>) Maps.transformValues(input, (Function<V1,V2>)this.getTransformerChecked(v1, v2));
+			return (Map<K2, V2>) Maps.transformValues(input, this.getTransformerChecked(v1, v2));
 		}else{
-			Map<K2, V1> k2v1 = transform(input,(Function<K1,K2>)this.getTransformerChecked(k1, k2));
+			Map<K2, V1> k2v1 = transform(input,this.getTransformerChecked(k1, k2));
 			if(v1 == v2){
 				return (Map<K2, V2>) k2v1;
 			}else{
-				return Maps.transformValues(k2v1, (Function<V1,V2>)this.getTransformerChecked(v1, v2));
+				return Maps.transformValues(k2v1, this.getTransformerChecked(v1, v2));
 			}
 		}		
 	}
@@ -409,5 +411,39 @@ public class TypeTransformer {
                 return value.getValue();
             }});
         return k2V;
+    }
+    /**
+     * 原始类型和thrift client 类型之间的转换器,需要2将完成转换，如果{@code L->M->R}
+     * @author guyadong
+     *
+     * @param <L> 原始类型
+     * @param <M>中间类型deorator
+     * @param <R> thrift client 类型
+     */
+    public class ThriftClientTypeTransformer<L,M extends ThriftDecorator<L>,R>  {
+		private final Function<L, M> left2Middle;
+		private final Function<M, R> middle2Right;
+		private final Function<M, L> middle2Left;
+		private final Function<R, M> right2Middle;
+    	public ThriftClientTypeTransformer(Class<L> left, Class<R> right) {
+    		checkArgument(null != left && null != right,"left,middle,right must not be null");
+    		Class<M> middClass = getMiddleClassChecked(left,right);
+    		left2Middle = getTransformerChecked(left,middClass);
+    		middle2Right = getTransformerChecked(middClass,right);
+    		middle2Left = getTransformerChecked(middClass,left);
+    		right2Middle = getTransformerChecked(right,middClass);
+    	}
+    	public final Function<L,R> toThriftClientTypeFun = new Function<L,R>(){
+			@Override
+			public R apply(L input) {
+				M m = left2Middle.apply(input);
+				return middle2Right.apply(m);
+			}};
+    	public final Function<R,L> toOriginalTypeFun = new Function<R,L>(){
+			@Override
+			public L apply(R input) {
+				M m = right2Middle.apply(input);
+				return middle2Left.apply(m);
+			}};
     }
 }
