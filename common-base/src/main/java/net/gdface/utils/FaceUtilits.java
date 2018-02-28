@@ -281,7 +281,7 @@ public class FaceUtilits {
 	}
 	
 	/**
-	 * 调用 {@link #getBytes(Object)}返回非空字节数据<br>
+	 * 调用 {@link #getBytes(Object)}返回非空字节数组<br>
 	 * 如果返回{@code null}或空字节数组，则抛出{@link IOException}<br>
 	 * @param src
 	 * @return
@@ -296,6 +296,29 @@ public class FaceUtilits {
 					.getSimpleName()));
 		}
 		return imgData;
+	}
+
+	/**
+	 * 将数据对象src转换为{@link ByteBuffer}
+	 * @param src
+	 * @return
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 * @see #getBytes(Object)
+	 */
+	static public final <T> ByteBuffer getByteBuffer(T src) throws IOException, IllegalArgumentException {
+		return ByteBuffer.wrap(getBytes(src));
+	}
+	/**
+	 * 调用 {@link #getByteBuffer(Object)}返回非空{@link ByteBuffer}<br>
+	 * 如果返回{@code null}或空，则抛出{@link IOException}<br>
+	 * @param src
+	 * @return
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 */
+	static public final <T> ByteBuffer getByteBufferNotEmpty(T src) throws IOException, IllegalArgumentException {
+		return ByteBuffer.wrap(getBytesNotEmpty(src));
 	}
 	/**
 	 * 将图片数据保存在folder指定的文件夹下,文件名用图片的md5校验码命名,自动判断文件后缀<br>
