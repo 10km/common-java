@@ -27,7 +27,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.facebook.swift</groupId>
-			<artifactId>swift-codec</artifactId>
+			<artifactId>swift-service</artifactId>
 			<version>0.14.2</version>
 		</dependency>
 	</dependencies>
