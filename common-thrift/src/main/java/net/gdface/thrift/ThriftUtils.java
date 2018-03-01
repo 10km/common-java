@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.thrift.TApplicationException;
 import org.apache.thrift.protocol.TProtocolException;
 
 import com.facebook.swift.codec.ThriftField.Requiredness;
@@ -36,6 +37,7 @@ import com.facebook.swift.codec.metadata.ThriftMethodExtractor;
 import com.facebook.swift.codec.metadata.ThriftMethodInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
+import com.facebook.swift.service.RuntimeTApplicationException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -478,5 +480,15 @@ public class ThriftUtils {
 				&& method.getParameterTypes().length == 0 
 				&& method.getExceptionTypes().length == 0
 				&& method.getReturnType() == boolean.class;
+	}
+
+	/** 避免{@code null}抛出异常 */
+	public static <T> T returnNull(RuntimeTApplicationException e){
+	    Throwable cause = e.getCause();
+	    if (cause instanceof TApplicationException  
+	            && ((TApplicationException) cause).getType() == TApplicationException.MISSING_RESULT){
+	        return null;
+	    }
+	    throw e;
 	}
 }
