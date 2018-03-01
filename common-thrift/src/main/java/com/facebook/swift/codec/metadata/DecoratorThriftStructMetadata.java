@@ -41,6 +41,29 @@ public class DecoratorThriftStructMetadata extends ThriftStructMetadata {
 						? input
 						: STRUCTS_CACHE.getUnchecked(input);
 			}};
+	    /** 
+	     * {@link DecoratorThriftFieldMetadata}缓存对象,
+	     * 保存每个{@link ThriftFieldMetadata}对应的{@link DecoratorThriftFieldMetadata}实例 
+	     */
+	    private final LoadingCache<ThriftFieldMetadata,DecoratorThriftFieldMetadata> 
+	    	FIELDS_CACHE = 
+	    		CacheBuilder.newBuilder().build(
+	    				new CacheLoader<ThriftFieldMetadata,DecoratorThriftFieldMetadata>(){
+							@Override
+							public DecoratorThriftFieldMetadata load(ThriftFieldMetadata key) throws Exception {
+								return new DecoratorThriftFieldMetadata(key);
+							}});
+	    /**  将{@link ThriftFieldMetadata}转换为 {@link DecoratorThriftFieldMetadata}对象 */
+		private  final Function<ThriftFieldMetadata,ThriftFieldMetadata> 
+			FIELD_TRANSFORMER = 
+				new Function<ThriftFieldMetadata,ThriftFieldMetadata>(){
+					@Nullable
+					@Override
+					public ThriftFieldMetadata apply(@Nullable ThriftFieldMetadata input) {
+					    return null == input || input instanceof DecoratorThriftFieldMetadata  
+					    		? input 
+					    		: FIELDS_CACHE.getUnchecked(input);
+					}};
 	private DecoratorThriftStructMetadata(ThriftStructMetadata input){
 		super(input.getStructName(), 
 				input.getStructType(), 
@@ -54,17 +77,17 @@ public class DecoratorThriftStructMetadata extends ThriftStructMetadata {
 	}
 	@Override
 	public ThriftFieldMetadata getField(int id) {
-		return DecoratorThriftFieldMetadata.FIELD_TRANSFORMER.apply(super.getField(id));
+		return FIELD_TRANSFORMER.apply(super.getField(id));
 	}
 
 	@Override
 	public Collection<ThriftFieldMetadata> getFields() {
-		return Collections2.transform(super.getFields(), DecoratorThriftFieldMetadata.FIELD_TRANSFORMER);
+		return Collections2.transform(super.getFields(), FIELD_TRANSFORMER);
 	}
 
 	@Override
 	public Collection<ThriftFieldMetadata> getFields(FieldKind type) {
-		return Collections2.transform(super.getFields(type), DecoratorThriftFieldMetadata.FIELD_TRANSFORMER);
+		return Collections2.transform(super.getFields(type), FIELD_TRANSFORMER);
 	}
 
 }

@@ -6,17 +6,12 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
-import com.google.common.base.Function;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.primitives.Primitives;
 
 /**
@@ -29,31 +24,8 @@ import com.google.common.primitives.Primitives;
 public class DecoratorThriftFieldMetadata extends ThriftFieldMetadata {
 	private static final Logger logger = Logger.getLogger(DecoratorThriftFieldMetadata.class.getName());
     private static Boolean primitiveOptional = null;
-    /** 
-     * {@link DecoratorThriftFieldMetadata}缓存对象,
-     * 保存每个{@link ThriftFieldMetadata}对应的{@link DecoratorThriftFieldMetadata}实例 
-     */
-    private static final LoadingCache<ThriftFieldMetadata,DecoratorThriftFieldMetadata> 
-    	FIELDS_CACHE = 
-    		CacheBuilder.newBuilder().build(
-    				new CacheLoader<ThriftFieldMetadata,DecoratorThriftFieldMetadata>(){
-						@Override
-						public DecoratorThriftFieldMetadata load(ThriftFieldMetadata key) throws Exception {
-							return new DecoratorThriftFieldMetadata(key);
-						}});
-    /**  将{@link ThriftFieldMetadata}转换为 {@link DecoratorThriftFieldMetadata}对象 */
-	public static  final Function<ThriftFieldMetadata,ThriftFieldMetadata> 
-		FIELD_TRANSFORMER = 
-			new Function<ThriftFieldMetadata,ThriftFieldMetadata>(){
-				@Nullable
-				@Override
-				public ThriftFieldMetadata apply(@Nullable ThriftFieldMetadata input) {
-				    return null == input || input instanceof DecoratorThriftFieldMetadata  
-				    		? input 
-				    		: FIELDS_CACHE.getUnchecked(input);
-				}};
-	private final Type javaType;
-	private DecoratorThriftFieldMetadata(ThriftFieldMetadata input){
+    private final Type javaType;
+	DecoratorThriftFieldMetadata(ThriftFieldMetadata input){
         super(
                 input.getId(),
                 input.getRequiredness(),
