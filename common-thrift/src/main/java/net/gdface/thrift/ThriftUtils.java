@@ -7,6 +7,7 @@ import static java.lang.String.format;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -467,5 +468,15 @@ public class ThriftUtils {
 						getMiddleClass(left,right),
 						"NOT FOUND decorator class for %s",
 						left.getName());
+	}
+	public static final String ISLOCAL_METHOD_NAME = "isLocal";
+	public static boolean isIsLocalMethod(Method method){
+		if(null == method){
+			return false;
+		}
+		return method.getName().equals(ISLOCAL_METHOD_NAME)
+				&& method.getParameterTypes().length == 0 
+				&& method.getExceptionTypes().length == 0
+				&& method.getReturnType() == boolean.class;
 	}
 }
