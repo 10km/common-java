@@ -41,7 +41,7 @@ public class ThriftExceptionTransformer<L extends Exception,R extends ThriftDeco
 				return constructStruct(data,rightMetadata);
 			}else{
 				// 调用String参数的构造方法创建实例
-				Object instance = constructor.newInstance(message);
+				R instance = constructor.newInstance(message);
 				return fillStructField(data,rightMetadata,instance);
 			}
 		} catch (Exception e) {

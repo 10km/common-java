@@ -1,6 +1,5 @@
 package net.gdface.thrift;
 
-import static com.facebook.swift.codec.metadata.DecoratorThriftStructMetadata.STRUCT_TRANSFORMER;
 import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
@@ -25,6 +24,7 @@ import org.apache.thrift.protocol.TProtocolException;
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.codec.metadata.ThriftCatalogWithTransformer;
 import com.facebook.swift.codec.metadata.ThriftConstructorInjection;
 import com.facebook.swift.codec.metadata.ThriftExtraction;
 import com.facebook.swift.codec.metadata.ThriftFieldExtractor;
@@ -48,12 +48,7 @@ import com.google.common.reflect.TypeToken;
  */
 public class ThriftUtils {
 
-	public static final ThriftCatalog CATALOG = new ThriftCatalog() {
-		@Override
-		public <T> ThriftStructMetadata getThriftStructMetadata(Type structType) {
-			return STRUCT_TRANSFORMER.apply(super.getThriftStructMetadata(structType));
-		}
-	};
+	public static final ThriftCatalog CATALOG = new ThriftCatalogWithTransformer();
 	public static final Set<Class<?>> THRIFT_BUILTIN_KNOWNTYPES = 
 	ImmutableSet.of(
 			boolean.class,
@@ -88,14 +83,16 @@ public class ThriftUtils {
 
 	/**
 	 * 构造{@code metadata}指定类型的实例并填充字段
+	 * 参见 {@link com.facebook.swift.codec.internal.reflection.ReflectionThriftStructCodec#constructStruct(Map<Short, Object>)}
 	 * @param data
 	 * @param metadata
 	 * @return
 	 * @throws Exception
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T>T constructStruct(Map<Short, Object> data,ThriftStructMetadata metadata) 
 		throws Exception{
-		Object instance;
+		T instance;
 	    {
 	        ThriftConstructorInjection constructor = metadata.getConstructorInjection().get();
 	        Object[] parametersValues = new Object[constructor.getParameters().size()];
@@ -105,7 +102,7 @@ public class ThriftUtils {
 	        }
 	
 	        try {
-	            instance = constructor.getConstructor().newInstance(parametersValues);
+	            instance = (T) constructor.getConstructor().newInstance(parametersValues);
 	        } catch (InvocationTargetException e) {
 	            if (e.getTargetException() != null) {
 	            	Throwables.throwIfUnchecked(e.getTargetException());
@@ -117,7 +114,8 @@ public class ThriftUtils {
 		return fillStructField(data,metadata,instance);
 	}
 	/**
-	 * 填充{@code instance}实例的字段
+	 * 填充{@code instance}实例的字段<br>
+	 * 参见 {@link com.facebook.swift.codec.internal.reflection.ReflectionThriftStructCodec#constructStruct(Map<Short, Object>)}
 	 * @param data
 	 * @param metadata
 	 * @param instance
@@ -125,7 +123,7 @@ public class ThriftUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T>T fillStructField(Map<Short, Object> data,ThriftStructMetadata metadata,Object instance) 
+	public static <T>T fillStructField(Map<Short, Object> data,ThriftStructMetadata metadata,T instance) 
 		throws Exception{
 		checkArgument(null != instance,"instance is null");
 		// inject fields
@@ -177,7 +175,7 @@ public class ThriftUtils {
 	        }
 	
 	        try {
-	            instance = builderMethod.getMethod().invoke(instance, parametersValues);
+	            instance = (T) builderMethod.getMethod().invoke(instance, parametersValues);
 	            if (instance == null) {
 	                throw new IllegalArgumentException("Builder method returned a null instance");
 	
@@ -200,11 +198,13 @@ public class ThriftUtils {
 	}
 
 	/**
-	 * 获取{@code field}指定的字段值
+	 * 获取{@code field}指定的字段值<br>
+	 * 
 	 * @param instance
 	 * @param field
 	 * @return
 	 * @throws Exception
+	 * @see {@link com.facebook.swift.codec.internal.reflection.AbstractReflectionThriftCodec#getFieldValue(Object, ThriftFieldMetadata)}
 	 */
 	public static Object getFieldValue(Object instance, ThriftFieldMetadata field) throws Exception {
 		try {
@@ -230,16 +230,23 @@ public class ThriftUtils {
 
 	/**
 	 * 根据{@code metadata}类型数据获取{@code instance}实例所有的字段值
+	 * 参见 {@link com.facebook.swift.codec.internal.reflection.ReflectionThriftStructCodec#write(Object, org.apache.thrift.protocol.TProtocol)}
 	 * @param instance
 	 * @param metadata
 	 * @return 字段值映射表
 	 */
 	public static Map<Short, Object> getFiledValues(Object instance, ThriftStructMetadata metadata) {
-		checkArgument(null != instance && null != metadata, "instance,metadata must not be null");
+		checkArgument(null != instance && null != metadata && metadata.getStructClass().isInstance(instance), 
+				"instance,metadata must not be null");
+		
 		Collection<ThriftFieldMetadata> fields = metadata.getFields(THRIFT_FIELD);
 		Map<Short, Object> data = new HashMap<>(fields.size());
-		for (ThriftFieldMetadata field : metadata.getFields()) {
+		for (ThriftFieldMetadata field : fields) {
 			try {
+	            // is the field readable?
+	            if (field.isWriteOnly()) {
+	                continue;
+	            }
 				Object value = getFieldValue(instance, field);
 				if (value == null) {
 					if (field.getRequiredness() == Requiredness.REQUIRED) {
@@ -363,9 +370,19 @@ public class ThriftUtils {
 		    .where(new TypeParameter<T>() {}, keyToken);
 	}
 
+	/**
+	 * @param type
+	 * @return
+	 * @see #getDecoratorType(Type)
+	 */
 	public static boolean hasDecoratorType(Type type){
 		return getDecoratorType(type) !=null;
 	}
+	/**
+	 * @param type
+	 * @return
+	 * @see #getDecoratorType(Class)
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T>Class<? extends ThriftDecorator<T>> getDecoratorType(Type type){
 		if(!isThriftStruct(type)){
@@ -373,10 +390,16 @@ public class ThriftUtils {
 		}
 		return null;
 	}
+	/**
+	 * 返回{@code clazz}对应的装饰类
+	 * @param clazz
+	 * @return 如果没有装饰类则返回{@code null}
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T,D extends ThriftDecorator<T>>Class<D> getDecoratorType(Class<T> clazz){
 		if(!isThriftStruct(clazz)){
 			String decoratorClazzName = clazz.getPackage().getName() 
+					+ "."
 					+ DECORATOR_CLIENT_PKG_SUFFIX 
 					+ "." 
 					+ clazz.getSimpleName();
@@ -432,6 +455,12 @@ public class ThriftUtils {
 		}
 		return null;
 	}
+	/**
+	 * @param left
+	 * @param right
+	 * @return
+	 * @see #getMiddleClass(Class, Class)
+	 */
 	@SuppressWarnings("unchecked")
 	public static <L,M extends ThriftDecorator<L>,R>Class<M> getMiddleClassChecked(Class<L>left,Class<R>right){
 		return (Class<M>) checkNotNull(

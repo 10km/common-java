@@ -294,7 +294,8 @@ public class TypeTransformer {
 		if(null == value){
 			return null;
 		}
-		if(checkNotNull(right,"right is null").isInstance(value)){
+		checkArgument(null != right,"right is null");
+		if(right.isInstance(value)){
 			return (R) value;
 		}
 		return this.getTransformerChecked(left, right).apply(value);
