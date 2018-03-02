@@ -17,11 +17,17 @@ import org.apache.commons.cli.ParseException;
  */
 public abstract class BaseAppConfig extends AbstractConfiguration 
 	implements CommonCliConstants {
-	private static final Logger logger = Logger.getLogger(BaseAppConfig.class.getSimpleName());
+	protected static final Logger logger = Logger.getLogger(BaseAppConfig.class.getSimpleName());
 
+	/**
+	 * 定义命令行参数
+	 */
 	protected final Options options = new Options();
+	/**
+	 * 定义命令行参数的默认值
+	 */
 	protected final Context defaultValue = Context.builder().build();
-	public BaseAppConfig() {
+	protected BaseAppConfig() {
 	}
 
 	@Override
@@ -38,18 +44,18 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 		HelpFormatter formatter = new HelpFormatter();
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cl = null;
-		Options options = getOptions();
-		options.addOption(HELP_OPTION, HELP_OPTION_LONG, false, HELP_OPTION_DESC);
+		Options opts = getOptions();
+		opts.addOption(HELP_OPTION, HELP_OPTION_LONG, false, HELP_OPTION_DESC);
 		String formatstr = getCmdLineSyntax();
 		boolean exit = false;
 		try {
 			// 处理Options和参数
-			cl = parser.parse(options, args);
+			cl = parser.parse(opts, args);
 			if (!cl.hasOption(HELP_OPTION)) {
 				if (cl.hasOption(DEFINE_OPTION)) {
 					setSystemProperty(cl.getOptionValues(DEFINE_OPTION));
 				}
-				loadConfig(options, cl);
+				loadConfig(opts, cl);
 			} else{
 				exit = true;
 			}
@@ -58,15 +64,19 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 			exit = true;
 		}
 		if (exit) {
-			formatter.printHelp(formatstr, options); // 如果发生异常，则打印出帮助信息
+			 // 如果发生异常，则打印出帮助信息
+			formatter.printHelp(formatstr, getOptions());
 			System.exit(1);
 		}
 		return this;
 	}
 	private void setSystemProperty(String[] properties) {
+		if(properties.length %2 != 0){
+			throw new IllegalArgumentException("INVALID properties length");
+		}
 		for (int i = 0; i < properties.length; i += 2) {
 			System.setProperty(properties[i], properties[i + 1]);
-			logger.info(String.format("set property [{}]=[{}]", properties[i], properties[i + 1]));
+			logger.info(String.format("set property [%s]=[%s]", properties[i], properties[i + 1]));
 		}
 	}
 	protected String getCmdLineSyntax() {

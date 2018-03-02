@@ -9,8 +9,13 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+/**
+ * 参数配置抽象类
+ * @author guyadong
+ *
+ */
 public abstract class AbstractConfiguration extends Context implements CommonCliConstants, CmdConfig {
-	
+	/** 子类提供命令行参数的默认值 */
 	protected abstract Map<String, Object> getDefaultValueMap();
 	@Override
 	public void loadConfig(Options options, CommandLine cmd) throws ParseException {

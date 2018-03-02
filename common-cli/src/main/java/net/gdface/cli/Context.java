@@ -3,6 +3,11 @@ package net.gdface.cli;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 上下文数据管理类
+ * @author guyadong
+ *
+ */
 public class Context {
 	public static final class Builder {
 		private final Map<String, Object> map = new HashMap<String, Object>();
