@@ -3,8 +3,6 @@ package net.gdface.cli;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.gdface.utils.Assert;
-
 public class Context {
 	public static final class Builder {
 		private final Map<String, Object> map = new HashMap<String, Object>();
@@ -13,8 +11,9 @@ public class Context {
 		}
 
 		public Builder addProperties(Map<String, ? extends Object> properties) {
-			if (properties != null)
+			if (properties != null){
 				map.putAll(properties);
+			}
 			return this;
 		}
 
@@ -27,7 +26,9 @@ public class Context {
 			return new Context(map);
 		}
 		public <T extends Context> T build(Class<T> clazz) {
-			Assert.notNull(clazz, "clazz");
+			if(null == clazz){
+				throw new NullPointerException("clazz must not be null");
+			}
 			T instance;
 			try {
 				instance = clazz.newInstance();
