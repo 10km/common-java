@@ -185,5 +185,6 @@ public class ThriftServerService extends AbstractIdleService{
 		logger.info("port: {}", config.getPort());
 		logger.info("connectionLimit: {}", config.getConnectionLimit());
 		logger.info("workerThreads: {}", config.getWorkerThreads());
+		logger.info("idleConnectionTimeout: {}", config.getIdleConnectionTimeout());
 	}
 }
