@@ -33,14 +33,14 @@ import static com.google.common.base.Preconditions.*;
 
 import io.airlift.units.Duration;
 /**
- * Factory class for creating client instance of IFaceLog<br>
+ * Factory class for creating client instance <br>
  * Example:<br>
  * <pre>
- * // get a IFaceLog synchronized instance
- * IFaceLog client = ClientFactory.builder()
+ * // get a FaceApi synchronized instance
+ * FaceApi client = ClientFactory.builder()
  * .setHostAndPort("127.0.0.1",9090)
  * .setTimeout(10,TimeUnit.SECONDS)
- * .getThriftClient(IFaceLog.class);
+ * .build(FaceApi.class,FaceApiThriftClient.class);
  * </pre>
  * @author guyadong
  *
@@ -59,6 +59,7 @@ public class ClientFactory {
         }
     }    
     private static final Cache<Class<?>, ThriftClient<?>> THRIFT_CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
+    private static final Cache<Class<?>, Object> CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
 	private ThriftClientManager clientManager; 
     private ThriftClientConfig thriftClientConfig = new ThriftClientConfig();
     private HostAndPort hostAndPort;
@@ -264,4 +265,22 @@ public class ClientFactory {
 	public static ClientFactory builder() {
 		return new ClientFactory();
 	}
+    /**
+     * 构造{@code interfaceClass}实例
+     * @param interfaceClass
+     * @param destClass
+     * @return 返回 {@code destClass }实例
+     */
+    @SuppressWarnings("unchecked")
+    public<I,O> O  build(Class<I> interfaceClass,final Class<O> destClass){
+        try {
+            return (O) CLIENT_CACHE.get(interfaceClass, new Callable<Object>(){
+                @Override
+                public Object call() throws Exception {
+                    return destClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this);
+                }});
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
