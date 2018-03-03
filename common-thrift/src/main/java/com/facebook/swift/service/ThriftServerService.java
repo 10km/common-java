@@ -23,6 +23,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * 创建thrift服务实例{@link ThriftServer},封装为{@link com.google.common.util.concurrent.Service}
@@ -140,6 +141,12 @@ public class ThriftServerService extends AbstractIdleService{
 				shutDown();
 			}
 		});
+		 addListener(new Listener(){
+				@Override
+				public void starting() {
+					logThriftServerConfig(ThriftServerService.this.thriftServerConfig);
+				}			
+			}, MoreExecutors.directExecutor());
 	}
 	
 	/** 
@@ -171,5 +178,12 @@ public class ThriftServerService extends AbstractIdleService{
 	protected final void shutDown() {
 		logger.info(" {} service shutdown(服务关闭) ",	serviceName());
 		thriftServer.close();
+	}
+	/** log 输出{@code config}中的关键参数 */
+	public static final void logThriftServerConfig(ThriftServerConfig config){
+		logger.info("RPC Service Parameters(服务运行参数):");
+		logger.info("port: {}", config.getPort());
+		logger.info("connectionLimit: {}", config.getConnectionLimit());
+		logger.info("workerThreads: {}", config.getWorkerThreads());
 	}
 }
