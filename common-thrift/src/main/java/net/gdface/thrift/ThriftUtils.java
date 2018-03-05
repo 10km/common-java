@@ -12,6 +12,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
@@ -77,6 +79,8 @@ public class ThriftUtils {
 			.put(java.sql.Time.class,Long.class)
 			.put(float.class,double.class)
 			.put(Float.class,Double.class)
+			.put(URI.class,String.class)
+			.put(URL.class,String.class)
 			.build();
 	public static final String DECORATOR_PKG_SUFFIX="decorator";
 	public static final String CLIENT_SUFFIX="client";

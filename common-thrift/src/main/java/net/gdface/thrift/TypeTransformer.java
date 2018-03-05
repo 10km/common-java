@@ -1,6 +1,9 @@
 package net.gdface.thrift;
 
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Date;
@@ -97,6 +100,30 @@ public class TypeTransformer {
 		public java.sql.Time apply(Long input) {
 			return null == input ? null : new java.sql.Time(input);
 		}};
+	private final Function<URL,String> url2StringFun = new Function<URL,String>(){
+		@Override
+		public String apply(URL input) {
+			return null == input ? null : input.toString();
+		}};
+	private final Function<URI,String> uri2StringFun = new Function<URI,String>(){
+		@Override
+		public String apply(URI input) {
+			return null == input ? null : input.toString();
+		}};
+	private final Function<String,URL> string2UrlFun = new Function<String,URL>(){
+		@Override
+		public URL apply(String input) {
+			try {
+				return null == input ? null : new URL(input);
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
+		}};
+	private final Function<String,URI> string2UriFun = new Function<String,URI>(){
+		@Override
+		public URI apply(String input) {
+			return null == input ? null : URI.create(input);
+		}};
 	private final Function<int[],List<Integer>> intArray2List = new Function<int[],List<Integer>>(){
 		@Override
 		public List<Integer> apply(int[] input) {
@@ -180,6 +207,10 @@ public class TypeTransformer {
 		transTable.put(Long.class,Date.class,long2DateFun);
 		transTable.put(Long.class,java.sql.Date.class,long2SqlDateFun);
 		transTable.put(Long.class,java.sql.Time.class,long2SqlTimeFun);
+		transTable.put(URL.class,String.class,url2StringFun);
+		transTable.put(URI.class,String.class,uri2StringFun);
+		transTable.put(String.class,URL.class,string2UrlFun);
+		transTable.put(String.class,URI.class,string2UriFun);
 		transTable.put(int[].class,List.class,intArray2List);
 		transTable.put(long[].class,List.class,longArray2List);
 		transTable.put(double[].class,List.class,doubleArray2List);
