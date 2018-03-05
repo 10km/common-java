@@ -341,17 +341,11 @@ public class TypeTransformer {
 				? null 
 				: Sets.newHashSet(Iterables.transform(input, this.getTransformerChecked(left, right)));
 	}
-	@SuppressWarnings("unchecked")
 	public <L,R> List<R> to(L[] input,Class<L> left,Class<R> right){
 		if(null == input){
 			return null;
 		}
-		checkArgument(null != left && null != right,"left or right is null");
-		List<L> l = Arrays.asList(input);
-		if(left == right){
-			return (List<R>) l;
-		}
-		return to(l,left,right);
+		return to(Arrays.asList(input),left,right);
 	}
 
 	public List<Integer> to(int[] input,Class<Integer>left,Class<Integer> right){
@@ -377,16 +371,8 @@ public class TypeTransformer {
 		if(null == input){
 			return null;
 		}
-		checkArgument(null != left && null != right,"left or right is null");
-		List<R> r ;
-		if(left == right){
-			r = (List<R>) input;
-		}else{
-			r =  to(input,left,right);
-		}		
-		return null == r 
-				? null
-				: r.toArray((R[]) Array.newInstance(checkNotNull(right,"right is null"), r.size()));
+		List<R> r = to(input,left,right);
+		return r.toArray((R[]) Array.newInstance(right, r.size()));
 	}
 	public  int[] tointArray(List<Integer> input,Class<Integer> left,Class<Integer> right){
 		return list2intArray.apply(input);
