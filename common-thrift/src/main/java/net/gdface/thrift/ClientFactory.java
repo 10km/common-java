@@ -189,7 +189,7 @@ public class ClientFactory {
     	if(null == channelPool){
     		synchronized(this){
     			if(null == channelPool){
-    				channelPool = new GenericObjectPool<NiftyClientChannel>(new ThriftClientPoolFactory(),channelPoolConfig);
+    				channelPool = new GenericObjectPool<NiftyClientChannel>(new NiftyClientChannelFactory(),channelPoolConfig);
     			}
     		}
     	}
@@ -235,7 +235,7 @@ public class ClientFactory {
     	NiftyClientChannel channel = (NiftyClientChannel) getClientManager().getRequestChannel(instance);
    		getChannelPool().returnObject(channel);
     }
-    private class ThriftClientPoolFactory implements PooledObjectFactory<NiftyClientChannel> {
+    private class NiftyClientChannelFactory implements PooledObjectFactory<NiftyClientChannel> {
 
 		@Override
 		public PooledObject<NiftyClientChannel> makeObject() throws Exception {
