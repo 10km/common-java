@@ -19,7 +19,9 @@ public class BeanRelativeUtilits {
 		private final String name;
 	
 		private FieldComparator(String name) {
-			Assert.notEmpty(name, "name");
+			if(null == name || name.isEmpty()){
+				throw new IllegalArgumentException("name is null or empty");
+			}
 			this.name = name;
 		}
 	
@@ -65,14 +67,18 @@ public class BeanRelativeUtilits {
 	}
 
 	public static final <T>List<T> sortByField(Collection<T> collection,String fieldName) {
-		Assert.notNull(collection, "collection");
+		if(null == collection){
+			throw new NullPointerException("collection is null ");
+		}
 		ArrayList<T> list = new ArrayList<T>(collection);
 		Collections.sort(list, FieldComparator.getComparator(fieldName));
 		return list;
 	}
 
 	public static final <T> T[] sortByField(T[] array,String fieldName) {
-		Assert.notNull(array, "array");
+		if(null == array){
+			throw new NullPointerException("array is null ");
+		}
 		T[] newArray = Arrays.copyOf(array, array.length);
 		Arrays.sort(newArray, FieldComparator.getComparator(fieldName));
 		return newArray;
