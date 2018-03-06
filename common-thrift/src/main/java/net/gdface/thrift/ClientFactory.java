@@ -7,10 +7,10 @@
 // ______________________________________________________
 package net.gdface.thrift;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -46,7 +46,6 @@ import io.airlift.units.Duration;
  *
  */
 public class ClientFactory {
-	private static final Logger logger = Logger.getLogger(ClientFactory.class.getSimpleName());
 
     private static class Singleton{
         private static final ThriftClientManager CLIENT_MANAGER = new ThriftClientManager();    
@@ -60,14 +59,13 @@ public class ClientFactory {
     }    
     private static final Cache<Class<?>, ThriftClient<?>> THRIFT_CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
     private static final Cache<Class<?>, Object> CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
+    private static final Cache<Class<?>,GenericObjectPool<?>> INSTANCE_POOL_CACHE = CacheBuilder.newBuilder().softValues().build();;
 	private ThriftClientManager clientManager; 
     private ThriftClientConfig thriftClientConfig = new ThriftClientConfig();
     private HostAndPort hostAndPort;
     private volatile NiftyClientConnector<? extends NiftyClientChannel> connector;
     private String clientName = ThriftClientManager.DEFAULT_NAME;
     private volatile GenericObjectPoolConfig channelPoolConfig = new GenericObjectPoolConfig();
-    private volatile GenericObjectPool<NiftyClientChannel> channelPool;
-
     protected ClientFactory() {
     }
 
@@ -185,21 +183,10 @@ public class ClientFactory {
         return this.clientManager;
     }
 
-    private GenericObjectPool<NiftyClientChannel> getChannelPool() {
-    	if(null == channelPool){
-    		synchronized(this){
-    			if(null == channelPool){
-    				channelPool = new GenericObjectPool<NiftyClientChannel>(new NiftyClientChannelFactory(),channelPoolConfig);
-    			}
-    		}
-    	}
-		return channelPool;
-	}
-
-	@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
 	private <T>ThriftClient<T> getThriftClient(final Class<T> interfaceClass) {
         try {
-        		return (ThriftClient<T>) THRIFT_CLIENT_CACHE.get(interfaceClass, new Callable<ThriftClient<?>>(){
+        		return (ThriftClient<T>) THRIFT_CLIENT_CACHE.get(checkNotNull(interfaceClass,"interfaceClass is null"), new Callable<ThriftClient<?>>(){
 					@Override
 					public ThriftClient<?> call() throws Exception {
 						return new ThriftClient<T>(
@@ -213,14 +200,47 @@ public class ClientFactory {
             throw new RuntimeException(e);
         }
     }
+	@SuppressWarnings("unchecked")
+	private <T> GenericObjectPool<T> getObjectPool(final Class<T> interfaceClass){
+		try{
+			return (GenericObjectPool<T>) INSTANCE_POOL_CACHE.get(checkNotNull(interfaceClass,"interfaceClass is null"), 
+					new Callable<GenericObjectPool<T>>(){
+				@Override
+				public GenericObjectPool<T> call() throws Exception {
+					return new GenericObjectPool<T>(new ClientInstanceFactory<T>(interfaceClass),channelPoolConfig);
+				}});
+		} catch (Exception e) {
+        	Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
+        }
+	}
     /**
+	 * 返回{@code instance}对应的资源池对象
+	 * @param instance
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private <T> GenericObjectPool<T> getObjectPoolByInstance(T instance){
+		checkArgument(null != instance,"intance is null");
+		List<GenericObjectPool<?>> found = new ArrayList<GenericObjectPool<?>>(1);
+		for(Class<?> clazz : instance.getClass().getInterfaces()){
+			GenericObjectPool<?> pool = INSTANCE_POOL_CACHE.getIfPresent(clazz) ;
+			if(null !=pool){
+				found.add(pool);
+			}
+		}
+		checkState(found.size() ==1,"%s is not valid instance of thrift client",instance.getClass().getName());
+		return (GenericObjectPool<T>) found.get(0);
+	}
+
+	/**
      * 返回{@code interfaceClass}的实例
      * @param interfaceClass
      * @return
      */
     public <T>T applyInstance(Class<T> interfaceClass) {
         try {
-			return getThriftClient(interfaceClass).open(getChannelPool().borrowObject());
+        	return getObjectPool(interfaceClass).borrowObject();
 		} catch (Exception e) {
         	Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
@@ -228,39 +248,47 @@ public class ClientFactory {
     }
     /**
      * 释放{@code instance}实例,必须于{@link #applyInstance(Class)}配对使用
-     * 向资源池归还{@link NiftyClientChannel}
      * @param instance
      */
     public <T>void releaseInstance(T instance){
-    	NiftyClientChannel channel = (NiftyClientChannel) getClientManager().getRequestChannel(instance);
-   		getChannelPool().returnObject(channel);
+    	if(null != instance){
+    		getObjectPoolByInstance(instance).returnObject(instance);
+    	}
     }
-    private class NiftyClientChannelFactory implements PooledObjectFactory<NiftyClientChannel> {
+    private class ClientInstanceFactory<T> implements PooledObjectFactory<T>{
+    	private final Class<T> interfaceClass;
 
+		private ClientInstanceFactory(Class<T> interfaceClass) {
+			checkArgument(null != interfaceClass && interfaceClass.isInterface());
+			this.interfaceClass = interfaceClass;
+		}
+		private NiftyClientChannel getChannel(PooledObject<T>p){
+	    	return (NiftyClientChannel) getClientManager().getRequestChannel(p.getObject());
+		}
 		@Override
-		public PooledObject<NiftyClientChannel> makeObject() throws Exception {
-			return new DefaultPooledObject<NiftyClientChannel>(getClientManager().createChannel(getConnector()).get());
+		public PooledObject<T> makeObject() throws Exception {
+			T obj = getThriftClient(interfaceClass).open(getClientManager().createChannel(getConnector()).get());
+			return new DefaultPooledObject<T>(obj);
 		}
 
 		@Override
-		public void destroyObject(PooledObject<NiftyClientChannel> p) throws Exception {
-			logger.info("destroyObject");
-			p.getObject().close();
+		public void destroyObject(PooledObject<T> p) throws Exception {
+	    	getChannel(p).close();
 		}
 
 		@Override
-		public boolean validateObject(PooledObject<NiftyClientChannel> p) {
-			
-			return p.getObject().getNettyChannel().isOpen();
+		public boolean validateObject(PooledObject<T> p) {
+			return getChannel(p).getNettyChannel().isOpen();
 		}
 
 		@Override
-		public void activateObject(PooledObject<NiftyClientChannel> p) throws Exception {
+		public void activateObject(PooledObject<T> p) throws Exception {
 		}
 
 		@Override
-		public void passivateObject(PooledObject<NiftyClientChannel> p) throws Exception {
+		public void passivateObject(PooledObject<T> p) throws Exception {
 		}
+    	
     }
 	public static ClientFactory builder() {
 		return new ClientFactory();
