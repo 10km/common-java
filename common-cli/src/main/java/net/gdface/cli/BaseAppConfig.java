@@ -80,11 +80,13 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 		}
 	}
 	protected String getCmdLineSyntax() {
-		return String.format("run%s [options]", this.getClass().getSimpleName());
+		return String.format("%s [options]", getAppName());
 	}
 
 	public Options getOptions() {
 		return options;
 	}
-
+	protected String getAppName(){
+		return "Appname";
+	}
 }
