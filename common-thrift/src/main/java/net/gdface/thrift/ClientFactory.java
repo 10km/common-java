@@ -233,9 +233,19 @@ public class ClientFactory {
 		return (GenericObjectPool<T>) found.get(0);
 	}
 
+	public <T>void closeObjectPool(Class<T> interfaceClass){
+		if(null != interfaceClass){
+			GenericObjectPool<?> pool = INSTANCE_POOL_CACHE.getIfPresent(interfaceClass);
+			if(null != pool){
+				pool.close();
+			}
+		}
+	}
+
 	/**
-     * 返回{@code interfaceClass}的实例
-     * @param interfaceClass
+	 * thrift client 实例不是线程安全的，只可单线程独占使用，所以每次调用实例时要向资源池{@link GenericObjectPool}
+     * 申请一个{@code interfaceClass}的实例,用完后调用{@link #releaseInstance(Object)}归还,其他线程才可重复使用。
+     * @param interfaceClass 接口类，不可为{@code null}
      * @return
      */
     public <T>T applyInstance(Class<T> interfaceClass) {
@@ -247,8 +257,8 @@ public class ClientFactory {
         }
     }
     /**
-     * 释放{@code instance}实例,必须于{@link #applyInstance(Class)}配对使用
-     * @param instance
+     * 释放{@code instance}实例使用权,必须和{@link #applyInstance(Class)}配对使用
+     * @param instance 接口实例
      */
     public <T>void releaseInstance(T instance){
     	if(null != instance){

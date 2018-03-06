@@ -34,7 +34,7 @@ public class ThriftExceptionTransformer<L extends Exception,R extends ThriftDeco
 		}
 		try {
 			Map<Short, Object> data = ThriftUtils.getFiledValues(input,leftMetadata);
-			String message = ((Exception)input).getMessage();
+			String message = input.getMessage();
 			Constructor<R> constructor = getStringConstructor();
 			if(null == constructor || Strings.isNullOrEmpty(message)){
 				// 默认构造方法创建实例
