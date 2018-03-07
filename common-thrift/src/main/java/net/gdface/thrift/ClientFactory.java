@@ -315,4 +315,15 @@ public class ClientFactory {
             throw new RuntimeException(e);
         }
     }
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ClientFactory [hostAndPort=");
+		builder.append(hostAndPort);
+		builder.append(", clientName=");
+		builder.append(clientName);
+		builder.append("]");
+		return builder.toString();
+	}
 }
