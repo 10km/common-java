@@ -8,7 +8,7 @@ import java.util.Set;
  * @author guyadong
  *
  */
-public final class NameStringUtilities {
+public final class NameStringUtils {
 	private static final String[] JAVA_RESERVED_WORDS = new String[]{"null", "true", "false", "abstract", "double", "int", "strictfp",
 			"boolean", "else", "interface", "super", "break", "extends", "long", "switch", "byte", "final", "native",
 			"synchronized", "case", "finally", "new", "this", "catch", "float", "package", "throw", "char", "for",
@@ -61,19 +61,10 @@ public final class NameStringUtilities {
 		list[0] = Character.toUpperCase(list[0]);
 		return new String(list);
 	}
-	public static String escape(String name) {
-		return isThriftReserved(name) || isJavaReserved(name) ? "my_" + name : name;
-	}
-	public static String escapeJava(String name) {
-		return isJavaReserved(name) ? "my_" + name : name;
-	}
-	public static String escapeThrift(String name) {
-		return isThriftReserved(name) ? "_" + name : name;
-	}
 	public static boolean isJavaReserved(String name) {
-		return null == name ? false : JAVA_RESERVED_KEYS.contains(name.toLowerCase());
+		return null == name ? false : JAVA_RESERVED_KEYS.contains(name);
 	}
 	public static boolean isThriftReserved(String name) {
-		return null == name ? false : THRIFT_RESERVED_KEYS.contains(name.toLowerCase());
+		return null == name ? false : THRIFT_RESERVED_KEYS.contains(name);
 	}
 }
