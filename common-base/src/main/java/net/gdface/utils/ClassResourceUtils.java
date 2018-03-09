@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -270,7 +271,7 @@ public class ClassResourceUtils {
         
         if (PROTOCOL_FILE.equals(dirURL.getProtocol())) {
           /* A file path: easy enough */
-          return Arrays.asList(new File(URI.create(dirURL.toString())).list(FILE_FILTER));
+          return new ArrayList<String>(Arrays.asList(new File(URI.create(dirURL.toString())).list(FILE_FILTER)));
         } 
    
         if (PROTOCOL_JAR.equals(dirURL.getProtocol())) {
