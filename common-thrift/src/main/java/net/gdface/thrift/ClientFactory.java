@@ -3,6 +3,7 @@ package net.gdface.thrift;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
@@ -20,6 +21,8 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import static com.google.common.net.HostAndPort.fromParts;
 import static com.google.common.net.HostAndPort.fromString;
 import static com.google.common.base.Preconditions.*;
@@ -59,7 +62,8 @@ public class ClientFactory {
     private HostAndPort hostAndPort;
     private volatile NiftyClientConnector<? extends NiftyClientChannel> connector;
     private String clientName = ThriftClientManager.DEFAULT_NAME;
-    private volatile GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+    private GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+    private Executor executor = MoreExecutors.directExecutor();
     protected ClientFactory() {
     }
 
@@ -146,11 +150,18 @@ public class ClientFactory {
      * @param poolConfig
      * @return
      */
-    public ClientFactory setPoolConfig(GenericObjectPoolConfig poolConfig) {
-    	if(null != poolConfig){
-    		this.poolConfig = poolConfig;
-    	}
+    public synchronized ClientFactory setPoolConfig(GenericObjectPoolConfig poolConfig) {
+   		this.poolConfig = checkNotNull(poolConfig,"poolConfig is null");
 		return this;
+	}
+
+	public synchronized ClientFactory setExecutor(Executor executor) {
+		this.executor = checkNotNull(executor,"executor is null");
+		return this;
+	}
+
+	public Executor getExecutor() {
+		return executor;
 	}
 
 	private HostAndPort getHostAndPort(){
