@@ -495,4 +495,12 @@ public class ThriftUtils {
 	    }
 	    throw e;
 	}
+	/** 避免{@code null}抛出异常 
+	 * @throws Throwable */
+	public static <T> T returnNull(Throwable e) throws Throwable{
+		if(e instanceof RuntimeTApplicationException){
+			return returnNull((RuntimeTApplicationException)e);
+		}
+	    throw e;
+	}
 }
