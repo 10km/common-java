@@ -21,6 +21,8 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import static com.google.common.net.HostAndPort.fromParts;
@@ -326,7 +328,11 @@ public class ClientFactory {
             throw new RuntimeException(e);
         }
     }
-
+    public <V> void addCallback(
+            final ListenableFuture<V> future,
+            final FutureCallback<? super V> callback) {
+    	ThriftUtils.addCallback(future, callback, getExecutor());
+    }
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
