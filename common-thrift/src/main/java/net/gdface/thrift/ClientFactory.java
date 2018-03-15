@@ -3,8 +3,12 @@ package net.gdface.thrift;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -343,25 +347,63 @@ public class ClientFactory {
 		builder.append("]");
 		return builder.toString();
 	}
-    public class ReleaseDecorator<A,V> implements FutureCallback<V>{
-        private final A async;
-        private final FutureCallback<V> callback;
-        public ReleaseDecorator(A async,FutureCallback<V> callback) {
-            this.async = checkNotNull(async,"instance is null");
-            this.callback = checkNotNull(callback,"callback is null");
-        }
+    /**
+     * {@link ListenableFuture}接口的装饰类，
+     * 用于确保异步调用结束时释放异步接口实例,参见{@link ClientFactory#releaseInstance(Object)}
+     * @author guyadong
+     *
+     * @param <A>
+     * @param <V>
+     */
+    public class ListenableFutureDecorator<A,V> implements ListenableFuture<V>{
+    	private final A async;
+    	private final ListenableFuture<V> future;
+    	private final AtomicBoolean released = new AtomicBoolean(false);
+		public ListenableFutureDecorator(A async, ListenableFuture<V> future) {
+			this.async = checkNotNull(async,"async is null");
+			this.future = checkNotNull(future,"future is null");
+		}
+		private void releaseAsync(){
+			if(released.compareAndSet(false, true)){
+				releaseInstance(async);	
+			}
+		}
+		@Override
+		public boolean cancel(boolean mayInterruptIfRunning) {
+			return future.cancel(mayInterruptIfRunning);
+		}
 
-        @Override
-        public void onSuccess(V result) {
-            releaseInstance(async);
-            callback.onSuccess(result);
-        }
+		@Override
+		public V get() throws InterruptedException, ExecutionException {
+			try{
+				return future.get();
+			}finally{
+				releaseAsync();				
+			}
+		}
 
-        @Override
-        public void onFailure(Throwable t) {
-            releaseInstance(async);
-            callback.onFailure(t);
-        }
-        
+		@Override
+		public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+			try{
+				return future.get(timeout, unit);
+			}finally{
+				releaseAsync();
+			}
+		}
+
+		@Override
+		public boolean isCancelled() {
+			return future.isCancelled();
+		}
+
+		@Override
+		public boolean isDone() {
+			return future.isDone();
+		}
+
+		@Override
+		public void addListener(Runnable listener, Executor executor) {
+			future.addListener(listener, executor);			
+		}    	
     }
 }

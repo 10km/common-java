@@ -508,33 +508,33 @@ public class ThriftUtils {
 		}
 	    throw e;
 	}
-    public static<V> void addCallback(
-            final ListenableFuture<V> future,
-            final FutureCallback<? super V> callback,Executor executor) {
-      checkArgument(null != callback,"callback is null");
-      checkArgument(null != executor,"executor is null");
-      Runnable callbackListener =
-          new Runnable() {
-              @Override
-              public void run() {
-                  V value;
-                  try {
-                      value = Futures.getDone(future);
-                  } catch (ExecutionException e) {
-                        try{
-                            // value is null
-                            value = returnNull(e.getCause()); 
-                        }catch(Throwable t){
-                            callback.onFailure(t);
-                            return;
-                        }                    
-                  } catch (Throwable e) {
-                      callback.onFailure(e);
-                      return;
-                  }
-                  callback.onSuccess(value);
-              }
-          };
-      future.addListener(callbackListener, executor);
-  }
+	public static<V> void addCallback(
+			final ListenableFuture<V> future,
+			final FutureCallback<? super V> callback,Executor executor) {
+		checkArgument(null != callback,"callback is null");
+		checkArgument(null != executor,"executor is null");
+		Runnable callbackListener =
+				new Runnable() {
+			@Override
+			public void run() {
+				V value;
+				try {
+					value = Futures.getDone(future);
+				} catch (ExecutionException e) {
+					try{
+						// value is null
+						value = returnNull(e.getCause()); 
+					}catch(Throwable t){
+						callback.onFailure(t);
+						return;
+					}                    
+				} catch (Throwable e) {
+					callback.onFailure(e);
+					return;
+				}
+				callback.onSuccess(value);
+			}
+		};
+		future.addListener(callbackListener, executor);
+	}
 }
