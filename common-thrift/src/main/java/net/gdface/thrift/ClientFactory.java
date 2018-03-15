@@ -343,4 +343,25 @@ public class ClientFactory {
 		builder.append("]");
 		return builder.toString();
 	}
+    public class ReleaseDecorator<A,V> implements FutureCallback<V>{
+        private final A async;
+        private final FutureCallback<V> callback;
+        public ReleaseDecorator(A async,FutureCallback<V> callback) {
+            this.async = checkNotNull(async,"instance is null");
+            this.callback = checkNotNull(callback,"callback is null");
+        }
+
+        @Override
+        public void onSuccess(V result) {
+            releaseInstance(async);
+            callback.onSuccess(result);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            releaseInstance(async);
+            callback.onFailure(t);
+        }
+        
+    }
 }
