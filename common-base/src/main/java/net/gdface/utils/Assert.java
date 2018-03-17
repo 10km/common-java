@@ -92,8 +92,9 @@ public class Assert {
 	public static final void assertValidCode(byte[] code1, byte[] code2){
 		notEmpty(code1, "code1");
 		notEmpty(code2, "code2");
-		if(code1.length!=code2.length)
+		if(code1.length!=code2.length){
 			throw new IllegalArgumentException(String.format("%s:INVALID CODE code1(%dbytes),code2(%dbytes)",getLocation(),code1.length,code2.length));
+		}
 	}
 
 }
