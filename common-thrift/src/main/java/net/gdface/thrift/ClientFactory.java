@@ -347,17 +347,31 @@ public class ClientFactory {
 		builder.append("]");
 		return builder.toString();
 	}
+	/**
+	 * 将{@code future} 封装为{@link ListenableFutureDecorator}实例
+	 * @param async thrift 异步接口实例
+	 * @param future 异步返回结果实例
+	 * @return {@link ListenableFutureDecorator}实例
+	 */
+	@SuppressWarnings("unchecked")
+	public <A,V>ListenableFutureDecorator<A,V>wrap(A async,ListenableFuture<V> future){
+		if(future instanceof ListenableFutureDecorator){
+			return (ListenableFutureDecorator<A,V>)future;
+		}
+		return new ListenableFutureDecorator<A, V>(async,future);	
+	}
     /**
      * {@link ListenableFuture}接口的装饰类，
      * 用于确保异步调用结束时释放异步接口实例,参见{@link ClientFactory#releaseInstance(Object)}
      * @author guyadong
      *
-     * @param <A>
-     * @param <V>
+     * @param <A> thrift 异步接口类型
+     * @param <V> 方法返回值类型
      */
     public class ListenableFutureDecorator<A,V> implements ListenableFuture<V>{
     	private final A async;
     	private final ListenableFuture<V> future;
+    	/** 确保 {@link #releaseAsync()}方法只被调用一次的标志字段 */
     	private final AtomicBoolean released = new AtomicBoolean(false);
 		public ListenableFutureDecorator(A async, ListenableFuture<V> future) {
 			this.async = checkNotNull(async,"async is null");
