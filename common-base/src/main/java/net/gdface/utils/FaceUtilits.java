@@ -108,7 +108,10 @@ public class FaceUtilits {
 		return toHex(getBytesInBuffer(buffer));  
 	}
 	
-    public static byte[] hex2Bytes(String src){  
+    public static byte[] hex2Bytes(String src){
+    	if(null == src){
+    		return null;
+    	}
         byte[] res = new byte[src.length()/2];  
         char[] chs = src.toCharArray();  
         int[] b = new int[2];  
