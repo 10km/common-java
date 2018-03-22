@@ -141,12 +141,12 @@ public class ThriftServerService extends AbstractIdleService{
 				shutDown();
 			}
 		});
-		 addListener(new Listener(){
-				@Override
-				public void starting() {
-					logThriftServerConfig(ThriftServerService.this.thriftServerConfig);
-				}			
-			}, MoreExecutors.directExecutor());
+		addListener(new Listener(){
+			@Override
+			public void starting() {
+				logThriftServerConfig(ThriftServerService.this.thriftServerConfig);
+			}			
+		}, MoreExecutors.directExecutor());
 	}
 	
 	/** 
