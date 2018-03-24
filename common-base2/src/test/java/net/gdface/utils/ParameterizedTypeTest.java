@@ -42,7 +42,10 @@ public class ParameterizedTypeTest {
 			ParmTest<List<Float>> parent = new ParmTest<List<Float>>();
 			ParmTest<List<Float>>.Sub<Integer> t = parent.new Sub<Integer>(){};
 			ParmTest.Sub.class.getModifiers();
-			System.out.println("isStatic " + Modifier.isStatic(ParmTest.Sub.class.getModifiers()));
+			System.out.println("ParmTest.Sub isStatic " + Modifier.isStatic(ParmTest.Sub.class.getModifiers()));
+			System.out.println("ParmTest isStatic " + Modifier.isStatic(ParmTest.class.getModifiers()));
+			System.out.println("ParmTest DeclaringClass " + ParmTest.class.getDeclaringClass());
+
 			Type type = t.getClass().getGenericSuperclass();
 			ParameterizedTypeImpl paramType = new ParameterizedTypeImpl((ParameterizedType) type);
 			System.out.println(type.toString());
