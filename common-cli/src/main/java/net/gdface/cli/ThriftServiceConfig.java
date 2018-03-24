@@ -24,6 +24,9 @@ public abstract class ThriftServiceConfig extends BaseAppConfig implements Thrif
 	 * @param defaultPort
 	 */
 	public ThriftServiceConfig(int defaultPort) {
+		if(defaultPort<=0){
+			throw new IllegalArgumentException(String.format("invalid defaultPort %d",defaultPort));
+		}
 		options.addOption(Option.builder().longOpt(SERVICE_PORT_OPTION_LONG)
 				.desc(SERVICE_PORT_OPTION_DESC + defaultPort).numberOfArgs(1).type(Number.class).build());
 		options.addOption(Option.builder().longOpt(WORK_THREADS_OPTION_LONG)
