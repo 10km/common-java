@@ -267,6 +267,54 @@ public class Configuration extends Properties{
 	}
 	public Short setPropertyShort(String key,Short value) {
 		return _setPropertyBaseType(key, value);
+	}
+	
+	public void setPropertyBooleanIfAbsent(String key, Boolean value) {
+		if(!containsKey(key)){
+			setPropertyBoolean(key, value);
+		}
+	}
+	
+	public void setPropertyIfAbsent(String key, String value) {
+		if(!containsKey(key)){
+			setProperty(key, value);
+		}
+	}
+	
+	public void setPropertyByteIfAbsent(String key,Byte value) {
+		if(!containsKey(key)){
+			setPropertyByte(key, value);
+		}
+	}
+
+	public void setPropertyDoubleIfAbsent(String key,Double value) {
+		if(!containsKey(key)){
+			setPropertyDouble(key, value);
+		}
+	}
+
+	public void setPropertyFloatIfAbsent(String key,Float value) {
+		if(!containsKey(key)){
+			setPropertyFloat(key, value);
+		}
+	}
+
+	public void setPropertyIntegerIfAbsent(String key,Integer value) {
+		if(!containsKey(key)){
+			setPropertyInteger(key, value);
+		}
+	}
+
+	public void setPropertyLongIfAbsent(String key,Long value) {
+		if(!containsKey(key)){
+			setPropertyLong(key, value);
+		}
+	}
+	
+	public void setPropertyShortIfAbsent(String key,Short value) {
+		if(!containsKey(key)){
+			setPropertyShort(key, value);
+		}
 	}	
 	/**如果参数为null，则prefix设置为""
 	 * @param prefix 要设置的 prefix
