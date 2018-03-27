@@ -8,8 +8,10 @@ import java.io.PrintStream;
  *
  */
 public class SampleLog {
+	/** 占位符 */
 	private static final String DELIM_STR = "{}";
 	private static final Object[] EMPTY_ARGS = new Object[0];
+	
 	private static void log(PrintStream printStream,int level, String format, Object ... args){
 		if(null == printStream || null == format){
 			return;
@@ -18,7 +20,7 @@ public class SampleLog {
 			args = EMPTY_ARGS;
 		}
 		StringBuilder buffer = new StringBuilder(format.length() + 64);
-		int beginIndex = 0,endIndex=0,count=0;
+		int beginIndex = 0,endIndex = 0,count = 0;
 		while((endIndex = format.indexOf(DELIM_STR, beginIndex))>=0){
 			buffer.append(format.substring(beginIndex, endIndex));
 			try{
@@ -45,15 +47,15 @@ public class SampleLog {
 	 * log("name : {},age:{}","tom",23);
 	 * </pre>
 	 * @param printStream
-	 * @param format 格式字符串,采用{@code '{}'}为占位符,占位符个数要与{@code args}数组长度匹配
-	 * @param args
+	 * @param format 格式字符串,采用"{}"为占位符,占位符个数要与{@code args}数组长度匹配
+	 * @param args 填充占位符的参数列表,如果数量小于占位符个数则多出的占位符填充"null"
 	 */
 	public static void log(PrintStream printStream,String format, Object ... args){
 		log(printStream,3,format,args);	
 	}
 	/**
 	 * 向控制台输出日志信息<br>
-	 * @param format 格式字符串,采用{@code '{}'}为占位符
+	 * @param format 格式字符串,采用"{}"为占位符
 	 * @param args
 	 * @see #log(PrintStream, String, Object...)
 	 */
