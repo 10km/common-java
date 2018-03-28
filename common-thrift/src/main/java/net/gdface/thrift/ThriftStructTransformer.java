@@ -1,11 +1,12 @@
 package net.gdface.thrift;
 
 import static com.google.common.base.Preconditions.*;
-import java.util.Map;
 
+import java.util.Map;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+
 import static net.gdface.thrift.ThriftUtils.*;
 /**
  * 有{@link com.facebook.swift.codec.ThriftStruct}注释的类型之间的转换
@@ -27,7 +28,7 @@ public class ThriftStructTransformer<L,R> implements Function<L,R>{
 			return null;
 		}
 		try {
-			Map<Short, Object> data = getFiledValues(input,leftMetadata);
+			Map<Short, TypeValue> data = getFiledValues(input,leftMetadata);
 			return constructStruct(data,rightMetadata);
 		} catch (Exception e) {
 			Throwables.throwIfUnchecked(e);

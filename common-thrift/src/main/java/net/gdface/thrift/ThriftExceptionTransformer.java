@@ -11,6 +11,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 
+import net.gdface.thrift.ThriftUtils.TypeValue;
+
 /**
  * 有{@link com.facebook.swift.codec.ThriftStruct}注释的异常类型之间的转换
  * @author guyadong
@@ -33,7 +35,7 @@ public class ThriftExceptionTransformer<L extends Exception,R extends ThriftDeco
 			return null;
 		}
 		try {
-			Map<Short, Object> data = ThriftUtils.getFiledValues(input,leftMetadata);
+			Map<Short, TypeValue> data = ThriftUtils.getFiledValues(input,leftMetadata);
 			String message = input.getMessage();
 			Constructor<R> constructor = getStringConstructor();
 			if(null == constructor || Strings.isNullOrEmpty(message)){

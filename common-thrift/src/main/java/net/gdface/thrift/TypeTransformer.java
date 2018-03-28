@@ -1,6 +1,8 @@
 package net.gdface.thrift;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -27,6 +29,7 @@ import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.Shorts;
+import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.*;
 import static net.gdface.thrift.ThriftUtils.*;
@@ -319,6 +322,114 @@ public class TypeTransformer {
 				setTransformer(right,left, trans.toOriginalTypeFun);
 			}
 		}
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public <L,R>R cast(Object value,Type left,Type right){
+		if(null == left){
+			return null;
+		}
+		TypeToken<?> leftToken = TypeToken.of(checkNotNull(left));
+		TypeToken<?> rightToken = TypeToken.of(checkNotNull(right));
+		if(left.equals(right)){
+			return (R) value;
+		}
+		// object to object
+		if((((Class<L>)left).isAssignableFrom(value.getClass()) 
+				&& left instanceof Class<?>)
+				&& (right instanceof Class<?>)){
+			return to((L)value,(Class<L>)left, (Class<R>)right);
+		}
+		// list to array
+		if(List.class.isAssignableFrom(leftToken.getRawType()) && null != rightToken.getComponentType()){
+			Class<?> componentType = rightToken.getComponentType().getRawType();
+			if(componentType == int.class){
+				return (R) tointArray((List<Integer>)value, Integer.class, int.class);
+			}
+			if(componentType == long.class){
+				return (R) tolongArray((List<Long>)value, Long.class, long.class);
+			}
+			if(componentType == double.class){
+				return (R) todoubleArray((List<Double>)value, Double.class, double.class);
+			}
+			if(componentType == float.class){
+				return (R) tofloatArray((List<Double>)value, Double.class, float.class);
+			}
+			if(componentType == short.class){
+				return (R) toshortArray((List<Short>)value, Short.class, short.class);
+			}
+			if(componentType == boolean.class){
+				return (R) tobooleanArray((List<Boolean>)value, Boolean.class, boolean.class);
+			}
+			Type elementType = ((ParameterizedType)left).getActualTypeArguments()[0];
+			if(elementType instanceof Class<?>){
+				return (R) toArray((List<L>)value,(Class<L>)elementType,(Class<R>)componentType);
+			}
+			throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
+		}
+		// list to list
+		if(List.class.isAssignableFrom(leftToken.getRawType()) && List.class == rightToken.getRawType()){
+			checkArgument(value instanceof List);
+			Type leftElementType = ((ParameterizedType)left).getActualTypeArguments()[0];
+			Type rightElementType = ((ParameterizedType)right).getActualTypeArguments()[0];
+			if(leftElementType instanceof Class<?>&& rightElementType instanceof Class<?>){
+				return (R) to((List<L>)value,(Class<L>)leftElementType,(Class<R>)rightElementType);
+			}
+			throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
+		}
+		// set to set
+		if(Set.class.isAssignableFrom(leftToken.getRawType()) && Set.class == rightToken.getRawType()){
+			checkArgument(value instanceof Set);
+			Type leftElementType = ((ParameterizedType)left).getActualTypeArguments()[0];
+			Type rightElementType = ((ParameterizedType)right).getActualTypeArguments()[0];
+			if(leftElementType instanceof Class<?>&& rightElementType instanceof Class<?>){
+				return (R) to((Set<L>)value,(Class<L>)leftElementType,(Class<R>)rightElementType);
+			}
+			throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
+		}
+		// map to map
+		if(Map.class.isAssignableFrom(leftToken.getRawType()) && Map.class == rightToken.getRawType()){
+			Type k1Type = ((ParameterizedType)left).getActualTypeArguments()[0];
+			Type v1Type = ((ParameterizedType)left).getActualTypeArguments()[1];
+			Type k2Type = ((ParameterizedType)right).getActualTypeArguments()[0];
+			Type v2Type = ((ParameterizedType)right).getActualTypeArguments()[1];
+			if(k1Type instanceof Class<?> 
+				&& v1Type instanceof Class<?> 
+				&& k2Type instanceof Class<?> 
+				&& v2Type instanceof Class<?>){
+				to((Map)value,(Class<?>)k1Type,(Class<?>)v1Type,(Class<?>)k2Type,(Class<?>)v2Type);
+			}
+			throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
+		}
+		// array to list
+		if(leftToken.isArray() && List.class == rightToken.getRawType()){
+			checkArgument(value.getClass().isArray());
+			Type componentType = leftToken.getComponentType().getType();
+			if(componentType == int.class){
+				return (R) to((int[])value, int.class, Integer.class);
+			}
+			if(componentType == long.class){
+				return (R) to((long[])value, long.class, Long.class);
+			}
+			if(componentType == double.class){
+				return (R) to((double[])value, double.class, Double.class);
+			}
+			if(componentType == float.class){
+				return (R) to((float[])value, float.class, Double.class);
+			}
+			if(componentType == short.class){
+				return (R) to((short[])value, short.class, Short.class);
+			}
+			if(componentType == boolean.class){
+				return (R) to((boolean[])value, boolean.class, Boolean.class);
+			}
+			Type rightElementType = ((ParameterizedType)right).getActualTypeArguments()[0];
+			if((leftToken.getComponentType().getType()) instanceof Class<?> 
+				&& rightElementType instanceof Class<?>){
+				return (R) to((L[])value,(Class<L>)componentType,(Class<R>)rightElementType);
+			}
+			throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
+		}
+		throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
 	}
 	@SuppressWarnings("unchecked")
 	public <L,R> R to (L value,Class<L>left,Class<R> right){

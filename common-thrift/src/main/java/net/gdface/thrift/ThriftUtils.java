@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -57,7 +58,15 @@ import com.google.common.util.concurrent.ListenableFuture;
  *
  */
 public class ThriftUtils {
-
+	public static class TypeValue{
+		final Type type;
+		final Object value;
+		private TypeValue(Type type, Object value) {
+			super();
+			this.type = type;
+			this.value = value;
+		}
+	}
 	public static final ThriftCatalog CATALOG = new ThriftCatalogWithTransformer();
 	public static final Set<Class<?>> THRIFT_BUILTIN_KNOWNTYPES = 
 	ImmutableSet.of(
@@ -102,17 +111,23 @@ public class ThriftUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T>T constructStruct(Map<Short, Object> data,ThriftStructMetadata metadata) 
+	public static <T>T constructStruct(Map<Short, TypeValue> data,ThriftStructMetadata metadata) 
 		throws Exception{
 		T instance;
 	    {
 	        ThriftConstructorInjection constructor = metadata.getConstructorInjection().get();
+	        Type[] dstTypes = constructor.getConstructor().getGenericParameterTypes();
+	        Type[] srcTypes = new Type[constructor.getParameters().size()];
 	        Object[] parametersValues = new Object[constructor.getParameters().size()];
+	        checkState(dstTypes.length == parametersValues.length);
 	        for (ThriftParameterInjection parameter : constructor.getParameters()) {
-	            Object value = data.get(parameter.getId());
-	            parametersValues[parameter.getParameterIndex()] = value;
+	        	TypeValue value = data.get(parameter.getId());
+	            parametersValues[parameter.getParameterIndex()] = value.value;
+	            srcTypes[parameter.getParameterIndex()] = value.type;
 	        }
-	
+	        for(int i =0;i<dstTypes.length;++i){
+	        	parametersValues[i] = TypeTransformer.getInstance().cast(parametersValues[i], srcTypes[i], dstTypes[i]);
+	        }
 	        try {
 	            instance = (T) constructor.getConstructor().newInstance(parametersValues);
 	        } catch (InvocationTargetException e) {
@@ -125,6 +140,7 @@ public class ThriftUtils {
 	    }
 		return fillStructField(data,metadata,instance);
 	}
+
 	/**
 	 * 填充{@code instance}实例的字段<br>
 	 * 参见 {@link com.facebook.swift.codec.internal.reflection.ReflectionThriftStructCodec#constructStruct(Map<Short, Object>)}
@@ -135,7 +151,7 @@ public class ThriftUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T>T fillStructField(Map<Short, Object> data,ThriftStructMetadata metadata,T instance) 
+	public static <T>T fillStructField(Map<Short, TypeValue> data,ThriftStructMetadata metadata,T instance) 
 		throws Exception{
 		checkArgument(null != instance,"instance is null");
 		// inject fields
@@ -143,9 +159,10 @@ public class ThriftUtils {
 	        for (ThriftInjection injection : fieldMetadata.getInjections()) {
 	            if (injection instanceof ThriftFieldInjection) {
 	                ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
-	                Object value = data.get(fieldInjection.getId());
+	                TypeValue value = data.get(fieldInjection.getId());
 	                if (value != null) {
-	                    fieldInjection.getField().set(instance, value);
+	                	Field f = fieldInjection.getField();
+	                    f.set(instance, TypeTransformer.getInstance().cast(value.value,value.type,f.getGenericType()));
 	                }
 	            }
 	        }
@@ -155,17 +172,24 @@ public class ThriftUtils {
 	    for (ThriftMethodInjection methodInjection : metadata.getMethodInjections()) {
 	        boolean shouldInvoke = false;
 	        Object[] parametersValues = new Object[methodInjection.getParameters().size()];
+	        Type[] srcTypes = new Type[methodInjection.getParameters().size()];
 	        for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
-	            Object value = data.get(parameter.getId());
+	        	TypeValue value = data.get(parameter.getId());
 	            if (value != null) {
-	                parametersValues[parameter.getParameterIndex()] = value;
+	                parametersValues[parameter.getParameterIndex()] = value.value;
+	                srcTypes[parameter.getParameterIndex()] = value.type;
 	                shouldInvoke = true;
 	            }
 	        }
 	
 	        if (shouldInvoke) {
-	            try {
-	                methodInjection.getMethod().invoke(instance, parametersValues);
+	            try {	            	
+	            	Method method = methodInjection.getMethod();
+	            	Type[] parameterTypes = method.getGenericParameterTypes();
+	            	for(int i = 0 ;i<parametersValues.length;++i){
+	            		parametersValues[i]=TypeTransformer.getInstance().cast(parametersValues[i], srcTypes[i], parameterTypes[i]);
+	            	}
+	            	method.invoke(instance, parametersValues);
 	            }
 	            catch (InvocationTargetException e) {
 	                if (e.getTargetException() != null) {
@@ -218,16 +242,18 @@ public class ThriftUtils {
 	 * @throws Exception
 	 * @see {@link com.facebook.swift.codec.internal.reflection.AbstractReflectionThriftCodec#getFieldValue(Object, ThriftFieldMetadata)}
 	 */
-	public static Object getFieldValue(Object instance, ThriftFieldMetadata field) throws Exception {
+	public static TypeValue getFieldValue(Object instance, ThriftFieldMetadata field) throws Exception {
 		try {
 			if (field.getExtraction().isPresent()) {
 				ThriftExtraction extraction = field.getExtraction().get();
 				if (extraction instanceof ThriftFieldExtractor) {
 					ThriftFieldExtractor thriftFieldExtractor = (ThriftFieldExtractor) extraction;
-					return thriftFieldExtractor.getField().get(instance);
+					Field f = thriftFieldExtractor.getField();
+					return new TypeValue(f.getGenericType(),f.get(instance));
 				} else if (extraction instanceof ThriftMethodExtractor) {
 					ThriftMethodExtractor thriftMethodExtractor = (ThriftMethodExtractor) extraction;
-					return thriftMethodExtractor.getMethod().invoke(instance);
+					Method method = thriftMethodExtractor.getMethod();
+					return new TypeValue(method.getGenericReturnType(),method.invoke(instance));
 				}
 				throw new IllegalAccessException("Unsupported field extractor type " + extraction.getClass().getName());
 			}
@@ -247,20 +273,20 @@ public class ThriftUtils {
 	 * @param metadata
 	 * @return 字段值映射表
 	 */
-	public static Map<Short, Object> getFiledValues(Object instance, ThriftStructMetadata metadata) {
+	public static Map<Short, TypeValue> getFiledValues(Object instance, ThriftStructMetadata metadata) {
 		checkArgument(null != instance && null != metadata && metadata.getStructClass().isInstance(instance), 
 				"instance,metadata must not be null");
 		
 		Collection<ThriftFieldMetadata> fields = metadata.getFields(THRIFT_FIELD);
-		Map<Short, Object> data = new HashMap<>(fields.size());
+		Map<Short, TypeValue> data = new HashMap<>(fields.size());
 		for (ThriftFieldMetadata field : fields) {
 			try {
 	            // is the field readable?
 	            if (field.isWriteOnly()) {
 	                continue;
 	            }
-				Object value = getFieldValue(instance, field);
-				if (value == null) {
+				TypeValue value = getFieldValue(instance, field);
+				if (value.value == null) {
 					if (field.getRequiredness() == Requiredness.REQUIRED) {
 						throw new TProtocolException("required field was not set");
 					} else {
