@@ -323,6 +323,13 @@ public class TypeTransformer {
 			}
 		}
 	}
+	/**
+	 * 将{@code value}转换为{@code right}指定的类型
+	 * @param value
+	 * @param left {@code value}的原类型
+	 * @param right 目标类型
+	 * @return
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <L,R>R cast(Object value,Type left,Type right){
 		if(null == left){
@@ -431,6 +438,13 @@ public class TypeTransformer {
 		}
 		throw new UnsupportedOperationException(String.format("unsupported cast %s to %s",left,right));
 	}
+	/**
+	 * 将{@code value}转换为{@code right}指定的类型
+	 * @param value
+	 * @param left {@code value}的原类型
+	 * @param right 目标类型
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public <L,R> R to (L value,Class<L>left,Class<R> right){
 		if(null == value){
@@ -442,41 +456,110 @@ public class TypeTransformer {
 		}
 		return this.getTransformerChecked(left, right).apply(value);
 	}
+	/**
+	 * 将 List 中的元素转换为{@code right}指定的类型
+	 * @param input
+	 * @param left 列表元素原类型
+	 * @param right 列表元素目标类型
+	 * @return
+	 */
 	public <L,R>List<R> to(List<L> input,Class<L> left, Class<R> right){
 		return null == input 
 				? null 
 				: Lists.transform(input, this.getTransformerChecked(left, right));
 	}
+	/**
+	 * 将 Set 中的元素转换为{@code right}指定的类型
+	 * @param input
+	 * @param left 集合元素原类型
+	 * @param right 集合元素目标类型
+	 * @return
+	 */
 	public <L,R> Set<R> to(Set<L> input,Class<L> left, Class<R> right){
 		return null == input 
 				? null 
 				: Sets.newHashSet(Iterables.transform(input, this.getTransformerChecked(left, right)));
 	}
+	/**
+	 * 将 数组 中的元素转换为{@code right}指定的类型
+	 * @param input
+	 * @param left 数组元素原类型
+	 * @param right 数组元素目标类型
+	 * @return
+	 */
 	public <L,R> List<R> to(L[] input,Class<L> left,Class<R> right){
 		if(null == input){
 			return null;
 		}
 		return to(Arrays.asList(input),left,right);
 	}
-
+	/**
+	 * 将 int[] 转换为列表
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public List<Integer> to(int[] input,Class<Integer>left,Class<Integer> right){
 		return intArray2List.apply(input);
 	}
+	/**
+	 * 将 long[] 转换为列表
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public List<Long> to(long[] input,Class<Long>left,Class<Long> right){
 		return longArray2List.apply(input);
 	}
+	/**
+	 * 将 double[] 转换为列表
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public List<Double> to(double[] input,Class<Double>left,Class<Double> right){
 		return doubleArray2List.apply(input);
 	}
+	/**
+	 * 将 float[] 转换为Double列表
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public List<Double> to(float[] input,Class<Float>left,Class<Double> right){
 		return floatArray2List.apply(input);
 	}
+	/**
+	 * 将 short[] 转换为列表
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public List<Short> to(short[] input,Class<Short>left,Class<Short> right){
 		return shortArray2List.apply(input);
 	}
+	/**
+	 * 将 boolean[] 转换为列表
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public List<Boolean> to(boolean[] input,Class<Boolean>left,Class<Boolean> right){
 		return booleanArray2List.apply(input);
 	}
+	/**
+	 * 将 列表 转换为数组
+	 * @param input
+	 * @param left 列表元素类型
+	 * @param right 数组元素类型
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public <L,R> R[] toArray(List<L> input,Class<L> left,Class<R> right){
 		if(null == input){
@@ -485,24 +568,75 @@ public class TypeTransformer {
 		List<R> r = to(input,left,right);
 		return r.toArray((R[]) Array.newInstance(right, r.size()));
 	}
+	/**
+	 * 将 Integer 列表 转换为数组
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public  int[] tointArray(List<Integer> input,Class<Integer> left,Class<Integer> right){
 		return list2intArray.apply(input);
 	}
+	/**
+	 * 将 Long 列表 转换为数组
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public  long[] tolongArray(List<Long> input,Class<Long> left,Class<Long> right){
 		return list2longArray.apply(input);
 	}
+	/**
+	 * 将 Double 列表 转换为数组
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public double[] todoubleArray(List<Double>input,Class<Double> left,Class<Double> right){
 		return list2doubleArray.apply(input);	
 	}
+	/**
+	 * 将 Double 列表 转换为float数组
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public float[] tofloatArray(List<Double>input,Class<Double> left,Class<Float> right){
 		return list2floatArray.apply(input);
 	}
+	/**
+	 * 将 Short 列表 转换为数组
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public short[] toshortArray(List<Short>input,Class<Short> left,Class<Short> right){
 		return list2shortArray.apply(input);	
 	}
+	/**
+	 * 将 Boolean 列表 转换为数组
+	 * @param input
+	 * @param left 
+	 * @param right 
+	 * @return
+	 */
 	public boolean[] tobooleanArray(List<Boolean>input,Class<Boolean> left,Class<Boolean> right){
 		return list2booleanArray.apply(input);
 	}
+	/**
+	 * 将{@code Map<K1,V1>}转换为{@code Map<K2,V2>}
+	 * @param input
+	 * @param k1
+	 * @param v1
+	 * @param k2
+	 * @param v2
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public <K1,V1,K2,V2> Map<K2,V2> to(Map<K1,V1>input,Class<K1>k1,Class<V1>v1,Class<K2> k2,Class<V2> v2){
 		checkArgument(null != k1 && null != v1 && null != k2 && null != v2,"k1,v1,k2,v2 must not be null");
