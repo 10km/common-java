@@ -1,15 +1,9 @@
 package net.gdface.image;
 
 import java.awt.Rectangle;
-import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +30,7 @@ import net.gdface.utils.Judge;
  * @author guyadong
  *
  */
-public class LazyImage {
+public class LazyImage implements ImageMatrix{
 	/**
 	 * 图像原始数据(未解码)
 	 */
@@ -176,33 +170,6 @@ public class LazyImage {
 			param.setDestination(destinationType.createBufferedImage(width, height));
 		return read(param);
 	}
-	/**
-	 * 根据指定的参数创建一个RGB格式的BufferedImage
-	 * @param matrixRGB 图像矩阵数据,为null则创建一个指定尺寸的空图像
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-	public static BufferedImage createRGBImage(byte[] matrixRGB,int width,int height){
-		Assert.isTrue(null==matrixRGB||(null!=matrixRGB&&matrixRGB.length==width*height*3),"invalid image description");
-	    DataBufferByte dataBuffer = null==matrixRGB?null:new DataBufferByte(matrixRGB, matrixRGB.length);
-        ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-        int[] nBits = {8, 8, 8};
-        int[] bOffs = {2, 1, 0};
-        ComponentColorModel colorModel = new ComponentColorModel(cs, nBits, false, false,
-                                             Transparency.OPAQUE,
-                                             DataBuffer.TYPE_BYTE);		   
-        WritableRaster raster = null!=dataBuffer
-        		? Raster.createInterleavedRaster(dataBuffer, width, height, width*3, 3, bOffs, null)
-        		: Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,width*3, 3, bOffs, null);;
-        BufferedImage img = new BufferedImage(colorModel,raster,false,null);
-        /*try {
-			ImageIO.write(img, "bmp", new File(System.getProperty("user.dir"),"test.bmp"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
-	    return  img;	    
-	}
 	private static final void assertContains(final Rectangle parent, String argParent, final Rectangle sub, final String argSub)
 			throws IllegalArgumentException {
 		if(!parent.contains(sub))
@@ -211,45 +178,20 @@ public class LazyImage {
 				argSub,sub.x, sub.y,sub.width, sub.height, argParent,parent.x,parent.y,parent.width, parent.height));
 	}
 	
-	/**
-	 * 对图像解码返回RGB格式矩阵数据
-	 * @return 
-	 * @throws UnsupportedFormatException
-	 */
+	@Override
 	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
 			matrixRGB=ImageUtil.getMatrixRGB(read(null));
 		}
 		return matrixRGB;
 	}
-	/**
-	 * 对图像解码返回BGR格式矩阵数据
-	 * @return
-	 * @throws UnsupportedFormatException
-	 */
+
+	@Override
 	public byte[] getMatrixBGR() throws UnsupportedFormatException{
 		if (matrixBGR==null){	
 			matrixBGR=ImageUtil.getMatrixBGR(read(null));
 		}
 		return matrixBGR;
-	}
-	/**
-	 * 对图像数据指定的区域解码返回RGB格式数据
-	 * @param rect 解码区域,为null时全图解码
-	 * @return 解码的RGB图像矩阵数据
-	 * @throws UnsupportedFormatException
-	 */
-	public byte[] getMatrixRGB(Rectangle rect) throws UnsupportedFormatException{
-		return cutMatrix( getMatrixRGB(),getRectangle(),rect);
-	}
-	/**
-	 * 对图像数据指定的区域解码返回BGR格式数据
-	 * @param rect 解码区域,为null时全图解码
-	 * @return 解码的RGB图像矩阵数据
-	 * @throws UnsupportedFormatException
-	 */
-	public byte[] getMatrixBGR(Rectangle rect) throws UnsupportedFormatException{
-		return cutMatrix( getMatrixBGR(),getRectangle(),rect);
 	}
 	/**
 	 * 从matrix矩阵中截取rect指定区域的子矩阵
@@ -283,7 +225,8 @@ public class LazyImage {
 	 * @return 灰度图像矩阵数据
 	 * @throws UnsupportedFormatException
 	 */
-	public byte[] getMatrixGray(Rectangle rect) throws UnsupportedFormatException{		
+	@Override
+	public byte[] getMatrixGray() throws UnsupportedFormatException{		
 		if(null==matrixGray){
 			BufferedImage image = read(null);
 			if(image.getType()==BufferedImage.TYPE_BYTE_GRAY){
@@ -296,23 +239,10 @@ public class LazyImage {
 			    matrixGray= (byte[]) grayImage.getData().getDataElements(0, 0, width, height, null);		
 			}
 		}
-		Rectangle srcRect = getRectangle();
-		if(null==rect||srcRect.equals(rect)){
-			return matrixGray;	
-		}else{
-			// 如果指定的区域超出图像尺寸，则抛出异常
-			assertContains(srcRect, "srcRect", rect ,"rect");
-			byte[] dstArray=new byte[rect.width*rect.height];	
-			// 从 matrixGray中复制指定区域的图像数据返回
-			for(int dstIndex=0,srcIndex=rect.y*srcRect.width+rect.x,y=0;
-					y<rect.height;
-					++y,srcIndex+=srcRect.width,dstIndex+=rect.width){
-				// 调用 System.arrayCopy每次复制一行数据
-				System.arraycopy(matrixGray, srcIndex, dstArray, dstIndex, rect.width);
-			}
-			return dstArray;			
-		}		
+		return matrixGray;
+
 	}
+
 	/**
 	 * 创建并打开对象
 	 * @param imgBytes
@@ -356,6 +286,15 @@ public class LazyImage {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	/**
+	 * @param bufferedImage 已经解码的图像数据,为null或为空,则抛出 {@link IllegalArgumentException}
+	 */
+	public LazyImage(BufferedImage bufferedImage)
+	{
+		Assert.notNull(bufferedImage, "bufferedImage");
+		this.bufferedImage = bufferedImage;
 	}
 	/**
 	 * @param imgBytes 图像数据,{@code imgBytes}为null或为空,则抛出 {@link IllegalArgumentException}
@@ -515,16 +454,14 @@ public class LazyImage {
 		this.rectangle=null;
 	}
 
-	/**
-	 * @return width
-	 */
+
+	@Override
 	public int getWidth() {
 		return width;
 	}
 
-	/**
-	 * @return height
-	 */
+
+	@Override
 	public int getHeight() {
 		return height;
 	}
@@ -547,20 +484,5 @@ public class LazyImage {
 		if(null==rectangle)
 			rectangle=new Rectangle(0,0,width,height);
 		return rectangle;
-	}
-	
-	public static void main(String args[]) throws FileNotFoundException, IOException, NotImageException, UnsupportedFormatException {
-		byte[] imgBytes = FaceUtilits.getBytesNotEmpty(new File("D:\\tmp\\guyadong-1.jpg"));
-		// LazyImage img = createInstance(imgBytes);
-		//LazyImage img = new LazyImage(new File("D:\\tmp\\guyadong-1.jpg"), null);
-		LazyImage img = new LazyImage(imgBytes);
-		img.setAutoClose(true);
-		img.open();
-		//img.getMatrixGray(null);
-		img.getMatrixRGB(new Rectangle(500,500,1024,1024));
-		/*for (int i = 0; i < 100000; i++) {
-			BufferedImage bi = img.read();
-			System.out.printf("%dX%d\n", bi.getWidth(), bi.getHeight());
-		}*/
 	}	
 }
