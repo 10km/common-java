@@ -1,18 +1,24 @@
 package com.facebook.swift.codec.metadata;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 import com.facebook.swift.codec.ThriftField.Requiredness;
 import com.facebook.swift.codec.metadata.ThriftFieldMetadata;
 import com.facebook.swift.codec.metadata.ThriftInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
+import com.google.common.base.Function;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.primitives.Primitives;
+
 
 /**
  * {@link ThriftFieldMetadata}的代理类，
@@ -24,8 +30,33 @@ import com.google.common.primitives.Primitives;
 public class DecoratorThriftFieldMetadata extends ThriftFieldMetadata {
 	private static final Logger logger = Logger.getLogger(DecoratorThriftFieldMetadata.class.getName());
     private static Boolean primitiveOptional = null;
-    private final Type javaType;
-	DecoratorThriftFieldMetadata(ThriftFieldMetadata input){
+    private static Boolean objectOptional = null;
+
+    /** 
+     * {@link DecoratorThriftFieldMetadata}缓存对象,
+     * 保存每个{@link ThriftFieldMetadata}对应的{@link DecoratorThriftFieldMetadata}实例 
+     */
+    private static final LoadingCache<ThriftFieldMetadata,DecoratorThriftFieldMetadata> 
+    	FIELDS_CACHE = 
+    		CacheBuilder.newBuilder().build(
+    				new CacheLoader<ThriftFieldMetadata,DecoratorThriftFieldMetadata>(){
+						@Override
+						public DecoratorThriftFieldMetadata load(ThriftFieldMetadata key) throws Exception {
+							return new DecoratorThriftFieldMetadata(key);
+						}});
+    /**  将{@link ThriftFieldMetadata}转换为 {@link DecoratorThriftFieldMetadata}对象 */
+	public static  final Function<ThriftFieldMetadata,ThriftFieldMetadata> 
+		FIELD_TRANSFORMER = 
+			new Function<ThriftFieldMetadata,ThriftFieldMetadata>(){
+				@Nullable
+				@Override
+				public ThriftFieldMetadata apply(@Nullable ThriftFieldMetadata input) {
+				    return null == input || input instanceof DecoratorThriftFieldMetadata  
+				    		? input 
+				    		: FIELDS_CACHE.getUnchecked(input);
+				}};
+	private final Type javaType;
+	private DecoratorThriftFieldMetadata(ThriftFieldMetadata input){
         super(
                 input.getId(),
                 input.getRequiredness(),
@@ -61,7 +92,19 @@ public class DecoratorThriftFieldMetadata extends ThriftFieldMetadata {
 		checkState(Requiredness.UNSPECIFIED != requiredness);
 		// 当为primitive类型时，Requiredness 为REQUIRED
 		// 当为primitive类型的Object封装类型时(Long,Integer,Boolean)，Requiredness为OPTIONAL
-		if( !Boolean.FALSE.equals(primitiveOptional)
+		if(Boolean.TRUE.equals(objectOptional) && requiredness == Requiredness.NONE){
+			if(javaType instanceof Class<?>)
+			{
+				Class<?> parameterClass = (Class<?>)javaType;
+				if(parameterClass.isPrimitive()){
+					requiredness = Requiredness.REQUIRED;
+				}else {
+					requiredness = Requiredness.OPTIONAL;
+				}				
+			}else{
+				requiredness = Requiredness.OPTIONAL;
+			}
+		}else	if( !Boolean.FALSE.equals(primitiveOptional)
 				&& javaType instanceof Class<?>
 				&& requiredness == Requiredness.NONE){
 			Class<?> parameterClass = (Class<?>)javaType;
@@ -76,7 +119,7 @@ public class DecoratorThriftFieldMetadata extends ThriftFieldMetadata {
 		return requiredness;
 	}
     /**
-	 * 设置optional标记<br>
+	 * 设置primitiveOptional标记<br>
 	 * 指定{@link #getRequiredness}方法调用时是否对primitive类型及其封装类型(Integer,Long)参数的返回值进行替换<br>
 	 * 默认值:{@code true}<br>
 	 * 该方法只能被调用一次
@@ -88,4 +131,18 @@ public class DecoratorThriftFieldMetadata extends ThriftFieldMetadata {
 		checkState(null == DecoratorThriftFieldMetadata.primitiveOptional,"primitiveOptional is initialized already.");
 		DecoratorThriftFieldMetadata.primitiveOptional = optional;
 	}
+    /**
+	 * 设置ObjectOptional标记<br>
+	 * 指定{@link #getRequiredness}方法调用时是否对Object类型参数的返回值进行替换<br>
+	 * 默认值:{@code true}<br>
+	 * 该方法只能被调用一次
+	 * @param optional
+	 * @see #getRequiredness()
+	 * @throws IllegalStateException 方法已经被调用
+	 */
+	public static synchronized void setObjectOptional(Boolean optional) {
+		checkState(null == DecoratorThriftFieldMetadata.objectOptional,"ObjectOptional is initialized already.");
+		DecoratorThriftFieldMetadata.objectOptional = optional;
+	}
+
 }
