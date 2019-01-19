@@ -1,4 +1,4 @@
-package net.gdface.thrift;
+package net.gdface.utils;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -25,7 +25,8 @@ import com.google.common.base.Function;
 /**
  * 网络管理工具类
  * @author guyadong
- * @deprecated instead use {@link net.gdface.utils.NetworkUtil} in com.gitee.l0km:common-base2 since version 1.0.7
+ * @since 1.0.7
+ *
  */
 public class NetworkUtil {
     public static final String DEFAULT_HOST = "localhost";
