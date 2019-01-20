@@ -1,10 +1,12 @@
 package net.gdface.thrift.exception;
 
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
+import com.google.common.base.Preconditions;
 
 /**
  * Runtime exception wrap class<br>
@@ -80,7 +82,37 @@ public final class ServiceRuntimeException extends RuntimeException{
             serviceStackTraceMessage = write.toString();
         }
     }
+    /**
+     * print stack trace message from service to {@link System#err}
+     * @see #printStackTrace()
+     */
+    public void printServiceStackTrace() {
+        printServiceStackTrace(System.err);
+    }
 
+    /**
+     * @param s
+     * @see #printServiceStackTrace()
+     * @see #printStackTrace(PrintStream)
+     * @throws NullPointerException s is {@code null}
+     */
+    public void printServiceStackTrace(PrintStream s) {
+        synchronized (Preconditions.checkNotNull(s)) {
+            s.println(serviceStackTraceMessage);
+        }
+    }
+
+    /**
+     * @param s
+     * @see #printServiceStackTrace()
+     * @see #printStackTrace(PrintWriter)
+     * @throws NullPointerException s is {@code null}
+     */
+    public void printServiceStackTrace(PrintWriter s) {
+        synchronized (Preconditions.checkNotNull(s)) {
+            s.println(serviceStackTraceMessage);
+        }
+    }
     /** return error message from service */
     @Override
     @ThriftField(1)
