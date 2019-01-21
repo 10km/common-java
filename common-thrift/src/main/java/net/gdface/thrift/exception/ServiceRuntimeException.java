@@ -24,7 +24,10 @@ public final class ServiceRuntimeException extends RuntimeException{
     private volatile String serviceStackTraceMessage;
     private String causeFields;
 
-    public ServiceRuntimeException() {
+    public ServiceRuntimeException(String message) {
+		this(message,null);
+	}
+	public ServiceRuntimeException() {
 		this(null,null);	
 	}
 	public ServiceRuntimeException(Throwable cause) {
