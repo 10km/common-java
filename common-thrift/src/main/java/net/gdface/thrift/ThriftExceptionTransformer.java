@@ -11,8 +11,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 
-import net.gdface.thrift.ThriftUtils.TypeValue;
-
 /**
  * 有{@link com.facebook.swift.codec.ThriftStruct}注释的异常类型之间的转换
  * @author guyadong
