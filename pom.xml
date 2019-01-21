@@ -69,6 +69,7 @@
 		<module>common-bean</module>
 		<module>common-cli</module>
 		<module>common-thrift</module>
+		<module>common-thrift-metadata</module>
     <module>common-base2</module>
   </modules>
 	<licenses>
