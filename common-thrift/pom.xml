@@ -34,6 +34,11 @@
 			<artifactId>swift-service</artifactId>
 			<version>0.14.2</version>
 		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>common-base2</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

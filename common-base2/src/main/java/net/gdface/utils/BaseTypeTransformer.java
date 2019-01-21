@@ -32,10 +32,9 @@ import static com.google.common.base.Preconditions.*;
 /**
  * 类型转换工具类
  * @author guyadong
- * @deprecated be replaced by {@link BaseTypeTransformer} 
  *
  */
-public class TypeTransformer {
+public class BaseTypeTransformer {
 	/**
 	 * 返回buffer中所有字节(position~limit),不改变buffer状态
 	 * @param buffer
@@ -187,7 +186,7 @@ public class TypeTransformer {
 			return null == input ? null : Booleans.toArray(input);
 		}};
 	protected final Table<Class<?>,Class<?>,Function<?,?>> transTable = HashBasedTable.create();
-	public TypeTransformer() {
+	public BaseTypeTransformer() {
 		transTable.put(byte[].class,ByteBuffer.class,byteArray2ByteBufferFun);
 		transTable.put(ByteBuffer.class,byte[].class,byteBuffer2ByteArrayFun);
 		transTable.put(Float.class,Double.class,float2DoubleFun);
@@ -224,7 +223,7 @@ public class TypeTransformer {
 	 * @param trans 转换器对象
 	 * @return
 	 */
-	public <L,R>TypeTransformer setTransformer(Class<L> left, Class<R> right, Function<L, R> trans){
+	public <L,R>BaseTypeTransformer setTransformer(Class<L> left, Class<R> right, Function<L, R> trans){
 		checkArgument(null != left && null != right && null != trans,"left, right, trans must not be null");
 		synchronized (this.transTable) {
 			transTable.put(left,right,trans);
