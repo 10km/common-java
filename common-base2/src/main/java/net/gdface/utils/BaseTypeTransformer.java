@@ -231,7 +231,7 @@ public class BaseTypeTransformer {
 		}
 	}
 	/**
-	 * 返回{@code left & right}指定的转换器，参数不可为{@code null}
+	 * 返回{@code left TO right}指定的转换器，参数不可为{@code null}
 	 * @param left
 	 * @param right
 	 * @return
