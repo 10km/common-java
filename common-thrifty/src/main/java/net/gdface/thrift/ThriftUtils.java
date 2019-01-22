@@ -47,6 +47,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.microsoft.thrifty.ThriftException;
 
 /**
  * thrift工具
@@ -503,7 +504,21 @@ public class ThriftUtils {
 				&& method.getExceptionTypes().length == 0
 				&& method.getReturnType() == boolean.class;
 	}
-
+	/** 避免{@code null}抛出异常 */
+	public static <T> T returnNull(ThriftException e){
+		if(e.kind == ThriftException.Kind.MISSING_RESULT  ){
+            return null;
+        }
+	    throw e;
+	}
+	/** 避免{@code null}抛出异常 
+	 * @throws Throwable */
+	public static <T> T returnNull(Throwable e) throws Throwable{
+		if(e instanceof ThriftException){
+			return returnNull((ThriftException)e);
+		}
+	    throw e;
+	}
 	public static<V> void addCallback(
 			final ListenableFuture<V> future,
 			final FutureCallback<? super V> callback,Executor executor) {
