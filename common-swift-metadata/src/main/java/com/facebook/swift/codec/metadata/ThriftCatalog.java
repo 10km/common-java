@@ -247,7 +247,7 @@ public class ThriftCatalog
             Class<?> elementType = rawType.getComponentType();
             if (elementType == byte.class) {
                 // byte[] is encoded as BINARY and requires a coersion
-                return coercions.get(javaType).getThriftType();
+                return coercions.get(byte[].class).getThriftType();
             }
             return array(getThriftType(elementType));
         }
