@@ -68,8 +68,9 @@
 		<module>common-base</module>
 		<module>common-bean</module>
 		<module>common-cli</module>
-		<module>common-thrift</module>
 		<module>common-swift-metadata</module>
+		<module>common-thrift</module>
+		<module>common-thrifty</module>
     <module>common-base2</module>
   </modules>
 	<licenses>
