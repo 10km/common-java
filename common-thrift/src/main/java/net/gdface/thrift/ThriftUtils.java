@@ -264,7 +264,7 @@ public class ThriftUtils {
 	 * @param metadata
 	 * @return 字段值映射表
 	 */
-	public static Map<Short, TypeValue> getFiledValues(Object instance, ThriftStructMetadata metadata) {
+	public static Map<Short, TypeValue> getFieldValues(Object instance, ThriftStructMetadata metadata) {
 		checkArgument(null != instance && null != metadata && metadata.getStructClass().isInstance(instance), 
 				"instance,metadata must not be null");
 		
@@ -292,7 +292,15 @@ public class ThriftUtils {
 		}
 		return data;
 	}
-
+	/**
+	 * @param instance
+	 * @param metadata
+	 * @return
+	 * @deprecated name spell error, replaced by {@link #getFieldValues(Object, ThriftStructMetadata)}
+	 */
+	public static Map<Short, TypeValue> getFiledValues(Object instance, ThriftStructMetadata metadata) {
+		return getFieldValues(instance,metadata);
+	}
 	public static boolean isThriftStruct(Type type){
 		return type instanceof Class<?> 
 			? ((Class<?>)type).isAnnotationPresent(ThriftStruct.class) 
