@@ -2,6 +2,7 @@ package net.gdface.thrift;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,7 @@ import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 
 import net.gdface.utils.BaseTypeTransformer;
+import okio.ByteString;
 
 import static com.google.common.base.Preconditions.*;
 import static net.gdface.thrift.ThriftUtils.*;
@@ -21,6 +23,26 @@ import static net.gdface.thrift.ThriftUtils.*;
  *
  */
 public class TypeTransformer extends BaseTypeTransformer{
+	private final Function<byte[],ByteString> byteArray2ByteStringFun = new Function<byte[],ByteString>(){
+		@Override
+		public ByteString apply(byte[] input) {
+			return null == input ? null : ByteString.of(input);
+		}};
+	private final Function<ByteString,byte[]> byteString2ByteArrayFun = new Function<ByteString,byte[]>(){
+		@Override
+		public byte[] apply(ByteString input) {
+			return null == input ? null : input.toByteArray();
+		}};
+	private final Function<ByteBuffer,ByteString> byteBuffer2ByteStringFun = new Function<ByteBuffer,ByteString>(){
+		@Override
+		public ByteString apply(ByteBuffer input) {
+			return null == input ? null : ByteString.of(input);
+		}};
+	private final Function<ByteString,ByteBuffer> byteString2ByteBufferFun = new Function<ByteString,ByteBuffer>(){
+		@Override
+		public ByteBuffer apply(ByteString input) {
+			return null == input ? null : input.asByteBuffer();
+		}};
 	private final Table<Class<?>,Class<?>,Function<?,?>> transTable = HashBasedTable.create();
 	private static TypeTransformer instance = new TypeTransformer();
 	public static TypeTransformer getInstance() {
@@ -30,6 +52,10 @@ public class TypeTransformer extends BaseTypeTransformer{
 		TypeTransformer.instance = checkNotNull(instance,"instance is null");
 	}
 	protected TypeTransformer() {
+		transTable.put(byte[].class,ByteString.class,byteArray2ByteStringFun);
+		transTable.put(ByteString.class,byte[].class,byteString2ByteArrayFun);
+		transTable.put(ByteBuffer.class,ByteString.class,byteBuffer2ByteStringFun);
+		transTable.put(ByteString.class,ByteBuffer.class,byteString2ByteBufferFun);		
 	}
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
@@ -46,16 +72,27 @@ public class TypeTransformer extends BaseTypeTransformer{
 						setTransformer(left, right, (Function<L,R>)result);
 					}
 				}
-			}else if(isThriftStruct(left) && isThriftStruct(right)){
-				// 添加 ThriftStuct对象之间的转换
+			}else if(isThriftStruct(left) && isThriftyStruct(right)){
+				// 添加 Swift到Thrifty对象的转换
 				synchronized (this.transTable) {
 					// double checking
 					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
-						if(isThriftException(left,right)){
-							result = new ThriftExceptionTransformer(left,right);
+						if(isThriftException(left) && isThriftyException(right)){
+							result = new Swift2ThriftyExceptionTransformer(left,right);
 						}else{
-							result = new ThriftStructTransformer(left,right);
+							checkArgument(!isThriftException(left) && !isThriftyException(right),
+									"INVALID type pair %s TO %s",left.getName(),right.getName());
+							result = new Swift2ThriftyStructTransformer(left,right);
 						}
+						setTransformer(left, right, result);
+					}
+				}
+			}else if(isThriftyStruct(left) && isThriftStruct(right)){
+				// 添加 Thrifty到Swift对象的转换
+				synchronized (this.transTable) {
+					// double checking
+					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
+						result = new Thrifty2SwiftStructTransformer(left,right);
 						setTransformer(left, right, result);
 					}
 				}

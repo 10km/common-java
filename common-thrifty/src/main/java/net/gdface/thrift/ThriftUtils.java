@@ -6,22 +6,12 @@ import static java.lang.String.format;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
-import java.net.URI;
-import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -40,13 +30,11 @@ import com.facebook.swift.codec.metadata.ThriftMethodInjection;
 import com.facebook.swift.codec.metadata.ThriftParameterInjection;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.microsoft.thrifty.Struct;
 import com.microsoft.thrifty.ThriftException;
 
 /**
@@ -56,34 +44,6 @@ import com.microsoft.thrifty.ThriftException;
  */
 public class ThriftUtils {
 	public static final ThriftCatalog CATALOG = new ThriftCatalogWithTransformer();
-	public static final Set<Class<?>> THRIFT_BUILTIN_KNOWNTYPES = 
-	ImmutableSet.of(
-			boolean.class,
-			byte.class,
-			double.class,
-			short.class,
-			int.class,
-			long.class,
-			String.class,
-			ByteBuffer.class,
-			void.class,
-			Boolean.class,
-			Byte.class,
-			Short.class,
-			Integer.class,
-			Long.class,
-			Double.class);
-	public static final Map<Class<?>,Class<?>> CAST_TYPES = 
-		ImmutableMap.<Class<?>,Class<?>>builder()
-			.put(byte[].class,ByteBuffer.class)
-			.put(Date.class,Long.class)
-			.put(java.sql.Date.class,Long.class)
-			.put(java.sql.Time.class,Long.class)
-			.put(float.class,double.class)
-			.put(Float.class,Double.class)
-			.put(URI.class,String.class)
-			.put(URL.class,String.class)
-			.build();
 	public static final String DECORATOR_PKG_SUFFIX="decorator";
 	public static final String CLIENT_SUFFIX="client";
 	public static final String DECORATOR_CLIENT_PKG_SUFFIX= DECORATOR_PKG_SUFFIX + "." + CLIENT_SUFFIX;
@@ -261,7 +221,7 @@ public class ThriftUtils {
 	 * @param metadata
 	 * @return 字段值映射表
 	 */
-	public static Map<Short, TypeValue> getFiledValues(Object instance, ThriftStructMetadata metadata) {
+	public static Map<Short, TypeValue> getFieldValues(Object instance, ThriftStructMetadata metadata) {
 		checkArgument(null != instance && null != metadata && metadata.getStructClass().isInstance(instance), 
 				"instance,metadata must not be null");
 		
@@ -295,7 +255,11 @@ public class ThriftUtils {
 			? ((Class<?>)type).isAnnotationPresent(ThriftStruct.class) 
 			: false;
 	}
-
+	public static boolean isThriftyStruct(Type type){
+		return type instanceof Class<?> 
+			? Struct.class.isAssignableFrom((Class<?>)type)
+			: false;
+	}
 	public static boolean isThriftDecorator(Type type){
 		return type instanceof Class<?> 
 				? ThriftDecorator.class.isAssignableFrom((Class<?>)type) 
@@ -310,16 +274,8 @@ public class ThriftUtils {
 		return false;
 	}
 
-	public static boolean isThriftBuildinType(Type type){		
-		return THRIFT_BUILTIN_KNOWNTYPES.contains(type);
-	}
-
 	public static boolean isPrimitivefloat(Type type){
 		return type == float.class;
-	}
-
-	public static boolean isCastType(Type type){
-		return  CAST_TYPES.containsKey(type);
 	}
 
 	public static boolean isException(Type type){
@@ -327,94 +283,11 @@ public class ThriftUtils {
 				? false 
 				: Exception.class.isAssignableFrom(TypeToken.of(type).getRawType());
 	}
-	public static <T>Constructor<T> getConstructor(Class<T> clazz,Class<?>...parameterTypes){
-		try {
-			return clazz.getConstructor(parameterTypes);
-		} catch (NoSuchMethodException e) {
-			return null;
-		} 
-	}
-	public static <T> boolean hasConstructor(Class<T> clazz,Class<?>...parameterTypes){
-		return getConstructor(clazz,parameterTypes) != null;
-	}
 	public static boolean isThriftException(Type type){
 		return isException(type) && isThriftStruct(type);
 	}
-	public static boolean isThriftException(Type left, Type right){
-		return isThriftException(left) && isThriftException(right);
-	}
-
-	public static boolean needTransformer(Type type){
-		return !isThriftBuildinType(type) && ! isPrimitivefloat(type);
-	}
-	public static interface Action{
-		void doClass(Class<?> type);
-	}
-	public static void traverseTypes(Type type,Action action){
-		checkArgument(null !=action,"action is null");
-		if(type instanceof Class<?>){
-			action.doClass((Class<?>) type);
-		}else if( type instanceof ParameterizedType){
-			ParameterizedType paramType = (ParameterizedType)type;
-			Type rawType = paramType.getRawType();
-			Type[] typeArgs = paramType.getActualTypeArguments();
-			traverseTypes(rawType,action);
-			for(Type arg:typeArgs){
-				traverseTypes(arg,action);
-			}
-		}else if (type instanceof GenericArrayType) {
-			traverseTypes(((GenericArrayType) type).getGenericComponentType(),action);
-		} else if (type instanceof TypeVariable) {
-			for (Type t : ((TypeVariable<?>) type).getBounds()) {
-				traverseTypes(t,action);
-			}
-		} else if (type instanceof WildcardType) {
-			for (Type t : ((WildcardType) type).getLowerBounds()) {
-				traverseTypes(t,action);
-			}
-			for (Type t : ((WildcardType) type).getUpperBounds()) {
-				traverseTypes(t,action);
-			}
-		} else{
-			throw new IllegalArgumentException(String.format("not allow type %s", type.toString()));
-		}
-	}
-	@SuppressWarnings("serial")
-	public static <K, V> TypeToken<Map<K, V>> mapToken(TypeToken<K> keyToken, TypeToken<V> valueToken) {
-		  return new TypeToken<Map<K, V>>() {}
-		    .where(new TypeParameter<K>() {}, keyToken)
-		    .where(new TypeParameter<V>() {}, valueToken);
-	}
-	@SuppressWarnings("serial")
-	public static <T> TypeToken<List<T>> listToken(TypeToken<T> keyToken) {
-		  return new TypeToken<List<T>>() {}
-		    .where(new TypeParameter<T>() {}, keyToken);
-	}
-	@SuppressWarnings("serial")
-	public static <T> TypeToken<Set<T>> setToken(TypeToken<T> keyToken) {
-		  return new TypeToken<Set<T>>() {}
-		    .where(new TypeParameter<T>() {}, keyToken);
-	}
-
-	/**
-	 * @param type
-	 * @return
-	 * @see #getDecoratorType(Type)
-	 */
-	public static boolean hasDecoratorType(Type type){
-		return getDecoratorType(type) !=null;
-	}
-	/**
-	 * @param type
-	 * @return
-	 * @see #getDecoratorType(Class)
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T>Class<? extends ThriftDecorator<T>> getDecoratorType(Type type){
-		if(!isThriftStruct(type)){
-			return getDecoratorType((Class<T>)type);
-		}
-		return null;
+	public static boolean isThriftyException(Type type){
+		return isException(type) && isThriftyStruct(type);
 	}
 	/**
 	 * 返回{@code clazz}对应的装饰类
@@ -493,16 +366,6 @@ public class ThriftUtils {
 						getMiddleClass(left,right),
 						"NOT FOUND decorator class for %s",
 						left.getName());
-	}
-	public static final String ISLOCAL_METHOD_NAME = "isLocal";
-	public static boolean isIsLocalMethod(Method method){
-		if(null == method){
-			return false;
-		}
-		return method.getName().equals(ISLOCAL_METHOD_NAME)
-				&& method.getParameterTypes().length == 0 
-				&& method.getExceptionTypes().length == 0
-				&& method.getReturnType() == boolean.class;
 	}
 	/** 避免{@code null}抛出异常 */
 	public static <T> T returnNull(ThriftException e){

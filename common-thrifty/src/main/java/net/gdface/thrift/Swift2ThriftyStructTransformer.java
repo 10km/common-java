@@ -1,11 +1,12 @@
 package net.gdface.thrift;
 
 import static com.google.common.base.Preconditions.*;
+import static net.gdface.thrift.ThriftyStructMetadata.STRUCTS_CACHE;
 
 import java.util.Map;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.google.common.base.Function;
-import com.google.common.base.Throwables;
+import com.microsoft.thrifty.Struct;
 
 import static net.gdface.thrift.ThriftUtils.*;
 /**
@@ -15,25 +16,20 @@ import static net.gdface.thrift.ThriftUtils.*;
  * @param <L> 
  * @param <R>
  */
-public class ThriftStructTransformer<L,R> implements Function<L,R>{
+public class Swift2ThriftyStructTransformer<L,R extends Struct> implements Function<L,R>{
 	private final ThriftStructMetadata leftMetadata;
-	private final ThriftStructMetadata rightMetadata;
-	public ThriftStructTransformer(Class<L> left, Class<R> right) {
-		this.leftMetadata= CATALOG.getThriftStructMetadata(checkNotNull(left,"left is null"));
-		this.rightMetadata= CATALOG.getThriftStructMetadata(checkNotNull(right,"right is null"));
+	private final ThriftyStructMetadata rightMetadata;
+	public Swift2ThriftyStructTransformer(Class<L> left, Class<R> right) {
+		this.leftMetadata = CATALOG.getThriftStructMetadata(checkNotNull(left,"left is null"));
+		this.rightMetadata = STRUCTS_CACHE.getUnchecked(checkNotNull(right,"right is null"));
 	}
 	@Override
 	public R apply(L input) {
 		if(null == input){
 			return null;
 		}
-		try {
-			Map<Short, TypeValue> data = getFiledValues(input,leftMetadata);
-			return constructStruct(data,rightMetadata);
-		} catch (Exception e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
-		}
+		Map<Short, TypeValue> data = getFieldValues(input,leftMetadata);
+		return rightMetadata.construct(data);
 	}
     @Override
 	public String toString() {
