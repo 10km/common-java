@@ -26,14 +26,13 @@
     <version>1.0.9-SNAPSHOT</version>
   </parent>
 
-  <artifactId>common-thrift-metadata</artifactId>
+  <artifactId>common-swift-metadata</artifactId>
   <packaging>jar</packaging>
   <name>${project.artifactId}</name>
-  <description>Annotation based encoder and decoder for Thrift</description>
+  <description>Annotation based field and struct metadata for Thrift/Swift</description>
 
   <properties>
   	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
   </properties>
 
   <dependencies>
