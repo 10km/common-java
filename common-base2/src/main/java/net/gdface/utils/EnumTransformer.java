@@ -1,4 +1,4 @@
-package net.gdface.thrift;
+package net.gdface.utils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

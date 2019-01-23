@@ -239,7 +239,7 @@ public class BaseTypeTransformer {
 	 * @param right
 	 * @return
 	 */
-	@SuppressWarnings({ "unchecked" })
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <L,R>Function<L,R> getTransformer(Class<L>left,Class<R>right){
 		checkArgument(null != left && null != right,"left, right must not be null");
 		if(right.isAssignableFrom(left)){
@@ -247,6 +247,19 @@ public class BaseTypeTransformer {
 			return (Function<L,R>)this.sameTypeFun;
 		}
 		Function<L, R> result = (Function<L, R>) this.transTable.get(left, right);
+		if (null == result) {
+			if (Enum.class.isAssignableFrom(left) && Enum.class.isAssignableFrom(left)) {
+				// 添加枚举类型转换
+				synchronized (this.transTable) {
+					// double checking
+					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
+						result = new EnumTransformer((Class<? extends Enum<?>>) left,
+								(Class<? extends Enum<?>>) right);
+						setTransformer(left, right, (Function<L,R>)result);
+					}
+				}
+			}
+		}
 		return result;
 	}
 	public <L,R>Function<L,R> getTransformerChecked(Class<L>left,Class<R>right){

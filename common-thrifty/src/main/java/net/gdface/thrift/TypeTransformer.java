@@ -56,17 +56,7 @@ public class TypeTransformer extends BaseTypeTransformer{
 	public <L,R>Function<L,R> getTransformer(Class<L>left,Class<R>right){
 		Function<L, R> result = super.getTransformer(left,right);	
 		if (null == result) {
-			if (Enum.class.isAssignableFrom(left) && Enum.class.isAssignableFrom(left)) {
-				// 添加枚举类型转换
-				synchronized (this.transTable) {
-					// double checking
-					if (null == (result = (Function<L, R>) this.transTable.get(left, right))) {
-						result = new EnumTransformer((Class<? extends Enum<?>>) left,
-								(Class<? extends Enum<?>>) right);
-						setTransformer(left, right, (Function<L,R>)result);
-					}
-				}
-			}else if(isThriftStruct(left) && isThriftyStruct(right)){
+			if(isThriftStruct(left) && isThriftyStruct(right)){
 				// 添加 Swift到Thrifty对象的转换
 				synchronized (this.transTable) {
 					// double checking
