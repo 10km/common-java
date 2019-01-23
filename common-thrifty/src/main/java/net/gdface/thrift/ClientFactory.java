@@ -15,7 +15,9 @@ import java.util.concurrent.TimeoutException;
 
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.microsoft.thrifty.protocol.BinaryProtocol;
 import com.microsoft.thrifty.protocol.Protocol;
 import com.microsoft.thrifty.service.AsyncClientBase;
@@ -42,6 +44,7 @@ public class ClientFactory {
     private HostAndPort hostAndPort;
     private long readTimeout;
     private long connectTimeout;
+	private Executor executor = MoreExecutors.directExecutor();
     protected ClientFactory() {
     }
 
@@ -84,13 +87,20 @@ public class ClientFactory {
     public ClientFactory setHostAndPort(String host) {
         return setHostAndPort(fromString(host));
     }
-    
+	public synchronized ClientFactory setExecutor(Executor executor) {
+		this.executor = checkNotNull(executor,"executor is null");
+		return this;
+	}
+
+	public Executor getExecutor() {
+		return executor;
+	}
     /**
      * @param stubClass
      * @param closeListener
      * @return instance of {@link net.gdface.facelog.client.thrift.IFaceLogClient}
      */
-    <T> T applyInstance(Class<T> stubClass,AsyncClientBase.Listener closeListener) {
+    public <T> T applyInstance(Class<T> stubClass,AsyncClientBase.Listener closeListener) {
         try {
             SocketTransport transport = 
                     new SocketTransport.Builder(hostAndPort.getHost(),hostAndPort.getPort())
@@ -123,6 +133,11 @@ public class ClientFactory {
         	Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
         }
+    }
+    public <V> void addCallback(
+            final ListenableFuture<V> future,
+            final FutureCallback<? super V> callback) {
+    	ThriftUtils.addCallback(future, callback, getExecutor());
     }
     public class ListenableFutureDecorator<A,V> implements ListenableFuture<V>{
         private final ListenableFuture<V> future;
@@ -158,4 +173,5 @@ public class ClientFactory {
         public void addListener(Runnable listener, Executor executor) {
             future.addListener(listener, executor);            
         }        
-    }}
+    }
+}
