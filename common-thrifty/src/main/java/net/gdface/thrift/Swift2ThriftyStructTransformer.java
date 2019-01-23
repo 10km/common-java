@@ -29,12 +29,12 @@ public class Swift2ThriftyStructTransformer<L,R extends Struct> implements Funct
 			return null;
 		}
 		Map<Short, TypeValue> data = getFieldValues(input,leftMetadata);
-		return rightMetadata.construct(data);
+		return rightMetadata.constructStruct(data);
 	}
     @Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder()
-				.append("ThriftStructTransformer [leftClass=")
+				.append("Swift2ThriftyStructTransformer [leftClass=")
 				.append(leftMetadata.getStructType())
 				.append(", rightClass=")
 				.append(rightMetadata.getStructType())

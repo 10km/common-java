@@ -50,13 +50,13 @@ public class ThriftyStructMetadata {
             Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);       
         } 
-		ImmutableMap.Builder<Short, Field> builder = ImmutableMap.builder();
+		ImmutableMap.Builder<Short, Field> fieldBuilder = ImmutableMap.builder();
 		ImmutableMap.Builder<Short, Method> methodBuilder = ImmutableMap.builder();
 
 		for(Field field:structType.getDeclaredFields()){
 			ThriftField thriftField;
 			if((thriftField = field.getAnnotation(ThriftField.class)) != null){
-				builder.put(thriftField.fieldId(), field);
+				fieldBuilder.put(thriftField.fieldId(), field);
 				try {
 					Method method = builderClass.getMethod(field.getName(), field.getType());
 					methodBuilder.put(thriftField.fieldId(), method);
@@ -65,7 +65,7 @@ public class ThriftyStructMetadata {
 				} 
 			}
 		}
-		fields = builder.build();
+		fields = fieldBuilder.build();
 		buildSetters = methodBuilder.build();
 		
 		try {
@@ -128,7 +128,7 @@ public class ThriftyStructMetadata {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public <T>T construct(Map<Short, TypeValue> fieldValues){
+	public <T>T constructStruct(Map<Short, TypeValue> fieldValues){
 		checkNotNull(fieldValues,"fieldValues is null");
 		try {
 			// new Builder()
@@ -138,10 +138,10 @@ public class ThriftyStructMetadata {
 				checkNotNull(method,"method is null");
 				TypeValue typeValue= entry.getValue();
 				// 调用Builder的设置方法设置字段值
-				method.invoke(builder, getInstance().to(
+				method.invoke(builder, getInstance().cast(
 						typeValue.value,
-						(Class<Object>)typeValue.type,
-						fields.get(entry.getKey()).getType()));
+						typeValue.type,
+						fields.get(entry.getKey()).getGenericType()));
 			}
 			// build()
 			return (T) buildMethod.invoke(builder);

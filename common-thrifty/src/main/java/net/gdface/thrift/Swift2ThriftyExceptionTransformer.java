@@ -22,7 +22,8 @@ public class Swift2ThriftyExceptionTransformer<L extends Exception,R extends Thr
 	private final ThriftyStructMetadata rightMetadata;
 	public Swift2ThriftyExceptionTransformer(Class<L> left, Class<R> right) {
 		checkArgument(isThriftException(left) && isThriftyException(right),
-				"left must be Exception with @com.facebook.swift.codec.ThriftStruct annotation,right must be Exception implement Struct interface"	);
+				"left must be Exception with @com.facebook.swift.codec.ThriftStruct annotation,"
+				+ "right must be Exception implement com.microsoft.thrifty.Struct interface"	);
 		this.leftMetadata = CATALOG.getThriftStructMetadata(left);
 		this.rightMetadata = STRUCTS_CACHE.getUnchecked(checkNotNull(right,"right is null"));
 	}
@@ -32,14 +33,14 @@ public class Swift2ThriftyExceptionTransformer<L extends Exception,R extends Thr
 			return null;
 		}
 		Map<Short, TypeValue> data = getFieldValues(input,leftMetadata);
-		return rightMetadata.construct(data);
+		return rightMetadata.constructStruct(data);
 
 	}
 
     @Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder()
-				.append("ThriftExceptionTransformer [leftClass=")
+				.append("Swift2ThriftyExceptionTransformer [leftClass=")
 				.append(leftMetadata.getStructType())
 				.append(", rightClass=")
 				.append(rightMetadata.getStructType())

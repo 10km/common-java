@@ -4,7 +4,6 @@ import static com.facebook.swift.codec.metadata.FieldKind.THRIFT_FIELD;
 import static com.google.common.base.Preconditions.*;
 import static java.lang.String.format;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -346,7 +345,7 @@ public class ThriftUtils {
 	 * @return
 	 */
 	public static <L,M extends ThriftDecorator<L>,R>Class<M> getMiddleClass(Class<L>left,Class<R>right){
-		if(isThriftStruct(right)){
+		if(isThriftyStruct(right)){
 			Class<M> decoratorClass = getDecoratorType(left);
 			if(null != decoratorClass && decoratorClass.getSimpleName().equals(left.getSimpleName())){
 				return decoratorClass;

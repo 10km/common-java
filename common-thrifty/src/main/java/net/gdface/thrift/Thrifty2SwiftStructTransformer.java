@@ -3,7 +3,6 @@ package net.gdface.thrift;
 import static com.google.common.base.Preconditions.*;
 import static net.gdface.thrift.ThriftyStructMetadata.STRUCTS_CACHE;
 
-import java.lang.annotation.Annotation;
 import java.util.Map;
 import com.facebook.swift.codec.metadata.ThriftStructMetadata;
 import com.google.common.base.Function;
@@ -41,7 +40,7 @@ public class Thrifty2SwiftStructTransformer<L extends Struct,R> implements Funct
     @Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder()
-				.append("ThriftStructTransformer [leftClass=")
+				.append("Thrifty2SwiftStructTransformer [leftClass=")
 				.append(leftMetadata.getStructType())
 				.append(", rightClass=")
 				.append(rightMetadata.getStructType())
