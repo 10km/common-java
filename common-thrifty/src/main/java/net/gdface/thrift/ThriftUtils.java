@@ -58,7 +58,7 @@ public class ThriftUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T>T constructStruct(Map<Short, TypeValue> data,ThriftStructMetadata metadata) 
+	public static <T>T constructStruct(Map<String, TypeValue> data,ThriftStructMetadata metadata) 
 		throws Exception{
 		T instance;
 	    {
@@ -98,15 +98,15 @@ public class ThriftUtils {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T>T fillStructField(Map<Short, TypeValue> data,ThriftStructMetadata metadata,T instance) 
+	public static <T>T fillStructField(Map<String, TypeValue> data,ThriftStructMetadata metadata,T instance) 
 		throws Exception{
 		checkArgument(null != instance,"instance is null");
 		// inject fields
 	    for (ThriftFieldMetadata fieldMetadata : metadata.getFields(THRIFT_FIELD)) {
 	        for (ThriftInjection injection : fieldMetadata.getInjections()) {
 	            if (injection instanceof ThriftFieldInjection) {
-	                ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;
-	                TypeValue value = data.get(fieldInjection.getId());
+	                ThriftFieldInjection fieldInjection = (ThriftFieldInjection) injection;	                
+	                TypeValue value = data.get(fieldInjection.getName());
 	                if (value != null) {
 	                	Field f = fieldInjection.getField();
 	                    f.set(instance, TypeTransformer.getInstance().cast(value.value,value.type,f.getGenericType()));
@@ -121,7 +121,7 @@ public class ThriftUtils {
 	        Object[] parametersValues = new Object[methodInjection.getParameters().size()];
 	        Type[] srcTypes = new Type[methodInjection.getParameters().size()];
 	        for (ThriftParameterInjection parameter : methodInjection.getParameters()) {
-	        	TypeValue value = data.get(parameter.getId());
+	        	TypeValue value = data.get(parameter.getName());
 	            if (value != null) {
 	                parametersValues[parameter.getParameterIndex()] = value.value;
 	                srcTypes[parameter.getParameterIndex()] = value.type;
@@ -153,7 +153,7 @@ public class ThriftUtils {
 	        ThriftMethodInjection builderMethod = metadata.getBuilderMethod().get();
 	        Object[] parametersValues = new Object[builderMethod.getParameters().size()];
 	        for (ThriftParameterInjection parameter : builderMethod.getParameters()) {
-	            Object value = data.get(parameter.getId());
+	            Object value = data.get(parameter.getName());
 	            parametersValues[parameter.getParameterIndex()] = value;
 	        }
 	
@@ -220,12 +220,12 @@ public class ThriftUtils {
 	 * @param metadata
 	 * @return 字段值映射表
 	 */
-	public static Map<Short, TypeValue> getFieldValues(Object instance, ThriftStructMetadata metadata) {
+	public static Map<String, TypeValue> getFieldValues(Object instance, ThriftStructMetadata metadata) {
 		checkArgument(null != instance && null != metadata && metadata.getStructClass().isInstance(instance), 
 				"instance,metadata must not be null");
 		
 		Collection<ThriftFieldMetadata> fields = metadata.getFields(THRIFT_FIELD);
-		Map<Short, TypeValue> data = new HashMap<>(fields.size());
+		Map<String, TypeValue> data = new HashMap<>(fields.size());
 		for (ThriftFieldMetadata field : fields) {
 			try {
 	            // is the field readable?
@@ -240,7 +240,7 @@ public class ThriftUtils {
 						continue;
 					}
 				}
-				data.put(field.getId(), value);
+				data.put(field.getName(), value);
 			} catch (Exception e) {
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);

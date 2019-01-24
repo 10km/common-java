@@ -28,7 +28,7 @@ public class Swift2ThriftyStructTransformer<L,R extends Struct> implements Funct
 		if(null == input){
 			return null;
 		}
-		Map<Short, TypeValue> data = getFieldValues(input,leftMetadata);
+		Map<String, TypeValue> data = getFieldValues(input,leftMetadata);
 		return rightMetadata.constructStruct(data);
 	}
     @Override

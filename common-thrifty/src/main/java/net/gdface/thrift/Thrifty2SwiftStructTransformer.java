@@ -30,7 +30,7 @@ public class Thrifty2SwiftStructTransformer<L extends Struct,R> implements Funct
 			return null;
 		}
 		try {
-			Map<Short, TypeValue> data = leftMetadata.getFieldValues(input);
+			Map<String, TypeValue> data = leftMetadata.getFieldValues(input);
 			return constructStruct(data, rightMetadata);
 		} catch (Exception e) {
 			Throwables.throwIfUnchecked(e);

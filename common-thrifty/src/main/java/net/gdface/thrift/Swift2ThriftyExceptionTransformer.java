@@ -32,7 +32,7 @@ public class Swift2ThriftyExceptionTransformer<L extends Exception,R extends Thr
 		if(null == input){
 			return null;
 		}
-		Map<Short, TypeValue> data = getFieldValues(input,leftMetadata);
+		Map<String, TypeValue> data = getFieldValues(input,leftMetadata);
 		return rightMetadata.constructStruct(data);
 
 	}
