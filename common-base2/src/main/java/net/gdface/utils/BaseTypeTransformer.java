@@ -62,6 +62,52 @@ public class BaseTypeTransformer {
 		public Object apply(Object input) {
 			return input;
 		}};
+	private final Function<Boolean,Boolean> booleanTypeFun = new Function<Boolean,Boolean>(){
+		@Override
+		public Boolean apply(Boolean input) {
+			return checkNotNull(input,"input is null").booleanValue();
+		}};
+	private final Function<Character,Character> charTypeFun = new Function<Character,Character>(){
+		@Override
+		public Character apply(Character input) {
+			return checkNotNull(input,"input is null").charValue();
+		}};		
+	private final Function<Byte,Byte> byteTypeFun = new Function<Byte,Byte>(){
+	@Override
+	public Byte apply(Byte input) {
+		return checkNotNull(input,"input is null").byteValue();
+	}};	
+	private final Function<Short,Short> shortTypeFun = new Function<Short,Short>(){
+		@Override
+		public Short apply(Short input) {
+			return checkNotNull(input,"input is null").shortValue();
+		}};		
+	private final Function<Integer,Integer> intTypeFun = new Function<Integer,Integer>(){
+		@Override
+		public Integer apply(Integer input) {
+			return checkNotNull(input,"input is null").intValue();
+		}};
+	private final Function<Long,Long> longTypeFun = new Function<Long,Long>(){
+		@Override
+		public Long apply(Long input) {
+			return checkNotNull(input,"input is null").longValue();
+		}};
+	private final Function<Float,Float> floatTypeFun = new Function<Float,Float>(){
+		@Override
+		public Float apply(Float input) {
+			return checkNotNull(input,"input is null").floatValue();
+		}};
+	private final Function<Double,Double> doubleTypeFun = new Function<Double,Double>(){
+		@Override
+		public Double apply(Double input) {
+			Double.class.isPrimitive();
+			return checkNotNull(input,"input is null").doubleValue();
+		}};
+	private final Function<Void,Void> voidTypeFun = new Function<Void,Void>(){
+		@Override
+		public Void apply(Void input) {
+			return null;
+		}};
 	private final Function<byte[],ByteBuffer> byteArray2ByteBufferFun = new Function<byte[],ByteBuffer>(){
 		@Override
 		public ByteBuffer apply(byte[] input) {
@@ -218,6 +264,15 @@ public class BaseTypeTransformer {
 		transTable.put(List.class,float[].class,list2floatArray);
 		transTable.put(List.class,short[].class,list2shortArray);
 		transTable.put(List.class,boolean[].class,list2booleanArray);
+		transTable.put(Boolean.class, boolean.class, booleanTypeFun);
+		transTable.put(Character.class, Character.class, charTypeFun);
+		transTable.put(Byte.class, byte.class, byteTypeFun);
+		transTable.put(Short.class, short.class, shortTypeFun);
+		transTable.put(Integer.class, int.class, intTypeFun);
+		transTable.put(Long.class, long.class, longTypeFun);
+		transTable.put(Float.class, float.class, floatTypeFun);
+		transTable.put(Double.class, double.class, doubleTypeFun);
+		transTable.put(Void.class, void.class, voidTypeFun);
 	}
 	/**
 	 * 设置{@code left -> right}的转换器，参数不可为{@code null}
@@ -491,18 +546,15 @@ public class BaseTypeTransformer {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <L, R> R cast(Object value, Type left, Type right) {
-		if(null == left){
-			return null;
-		}
 		TypeToken<?> leftToken = TypeToken.of(checkNotNull(left));
 		TypeToken<?> rightToken = TypeToken.of(checkNotNull(right));
-		if(left.equals(right)){
-			return (R) value;
+		if(null == value){
+			// right为primitive类型时 value不可为null,否则抛出异常
+			checkArgument(! ((right instanceof Class<?>) && ((Class<?>)right).isPrimitive()),"cant cast null to primitive type %s",right);
+			return null;
 		}
 		// object to object
-		if((((Class<L>)left).isAssignableFrom(value.getClass()) 
-				&& left instanceof Class<?>)
-				&& (right instanceof Class<?>)){
+		if( left instanceof Class<?> && right instanceof Class<?>){
 			return to((L)value,(Class<L>)left, (Class<R>)right);
 		}
 		// list to array
