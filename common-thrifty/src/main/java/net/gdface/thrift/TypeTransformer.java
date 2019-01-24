@@ -3,8 +3,6 @@ package net.gdface.thrift;
 import java.nio.ByteBuffer;
 
 import com.google.common.base.Function;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 
 import net.gdface.utils.BaseTypeTransformer;
 import okio.ByteString;
@@ -37,7 +35,6 @@ public class TypeTransformer extends BaseTypeTransformer{
 		public ByteBuffer apply(ByteString input) {
 			return null == input ? null : input.asByteBuffer();
 		}};
-	private final Table<Class<?>,Class<?>,Function<?,?>> transTable = HashBasedTable.create();
 	private static TypeTransformer instance = new TypeTransformer();
 	public static TypeTransformer getInstance() {
 		return instance;

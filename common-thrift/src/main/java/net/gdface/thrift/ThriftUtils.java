@@ -454,7 +454,7 @@ public class ThriftUtils {
 	}
 
 	/**
-	 * 判断 {@code left & right}之间是否为装饰类和被装饰类关系
+	 * 判断 {@code left and right}之间是否为装饰类和被装饰类关系
 	 * @param left 装饰类
 	 * @param right 补装饰类
 	 * @return

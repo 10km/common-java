@@ -1,8 +1,6 @@
 package net.gdface.thrift;
 
 import com.google.common.base.Function;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import net.gdface.utils.BaseTypeTransformer;
 
 import static com.google.common.base.Preconditions.*;
@@ -13,7 +11,6 @@ import static net.gdface.thrift.ThriftUtils.*;
  *
  */
 public class TypeTransformer extends BaseTypeTransformer{
-	private final Table<Class<?>,Class<?>,Function<?,?>> transTable = HashBasedTable.create();
 	private static TypeTransformer instance = new TypeTransformer();
 	public static TypeTransformer getInstance() {
 		return instance;
