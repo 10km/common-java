@@ -139,7 +139,21 @@ public class ClientFactory {
             final FutureCallback<? super V> callback) {
     	ThriftUtils.addCallback(future, callback, getExecutor());
     }
-    public class ListenableFutureDecorator<A,V> implements ListenableFuture<V>{
+    @Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ClientFactory [hostAndPort=");
+		builder.append(hostAndPort);
+		builder.append(", readTimeout=");
+		builder.append(readTimeout);
+		builder.append(", connectTimeout=");
+		builder.append(connectTimeout);
+		builder.append(", executor=");
+		builder.append(executor);
+		builder.append("]");
+		return builder.toString();
+	}
+	public class ListenableFutureDecorator<A,V> implements ListenableFuture<V>{
         private final ListenableFuture<V> future;
         public ListenableFutureDecorator(ListenableFuture<V> future) {
             this.future = checkNotNull(future,"future is null");
