@@ -66,6 +66,8 @@
 	</build>
 	<modules>
 		<module>common-base</module>
+		<module>common-image</module>
+		<module>common-image-android</module>
 		<module>common-bean</module>
 		<module>common-cli</module>
 		<module>common-swift-metadata</module>
