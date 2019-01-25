@@ -9,15 +9,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.MemoryCacheImageInputStream;
-
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import net.gdface.utils.Assert;
 import net.gdface.utils.FaceUtilits;
 import net.gdface.utils.Judge;
@@ -25,7 +21,7 @@ import net.gdface.utils.Judge;
 /**
  * 图像数据处理对象<br>
  * {@link #open()}可以在不将图像全部解码加载到内存而获取图像的基本信息<br>
- * {@link #read(ImageReadParam)}使用内存做cache读取(不使用临时文件做cache)<br>
+ * {@link #read()}使用内存做cache读取(不使用临时文件做cache)<br>
  * {@link #read(Rectangle, ImageTypeSpecifier)}可以对图像指定区域解码
  * @author guyadong
  *
@@ -61,16 +57,14 @@ public class LazyImage implements ImageMatrix{
 	private String suffix = null;
 	private int width;
 	private int height;
-	private Rectangle rectangle=null;
-	private ImageReader imageReader;
-	private MemoryCacheImageInputStream imageInputstream;
+	private InputStream imageInputstream;
 	private FileInputStream fileInputStream;
 	/**
-	 * 是否在 {@link #open()}和 {@link #read(ImageReadParam)}执行结束时自动执行 {@link #close()}释放资源<br>
+	 * 是否在 {@link #open()}和 {@link #read()}执行结束时自动执行 {@link #close()}释放资源<br>
 	 * 默认为{@code true}
 	 */
 	private boolean autoClose=true;
-	private BufferedImage bufferedImage=null;
+	private Bitmap bitmap=null;
 	/**
 	 * 通过{@link ImageReader}来读取图像基本信息，检查图像数据有效性
 	 * @return 
@@ -79,22 +73,16 @@ public class LazyImage implements ImageMatrix{
 	 */
 	public LazyImage open() throws UnsupportedFormatException, NotImageException {
 		try {
-			Iterator<ImageReader> it = ImageIO.getImageReaders(getImageInputstream());
-			if (it.hasNext())
-				try {
-					imageReader = it.next();
-					imageReader.setInput(getImageInputstream(), true, true);
-					this.suffix = imageReader.getFormatName().trim().toLowerCase();
-					this.width = imageReader.getWidth(0);
-					this.height = imageReader.getHeight(0);
-					return this;
-				} catch (Exception e) {
-					throw new UnsupportedFormatException(e);
-				} 
-			else {
-				throw new NotImageException();
-			}
-		} finally {
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inJustDecodeBounds = true;
+			Bitmap tmp = BitmapFactory.decodeStream(getImageInputstream(),null, options);
+			this.width = tmp.getWidth();
+			this.height = tmp.getHeight();
+			this.suffix = options.outMimeType;
+			return this;
+		} catch(Exception e){
+			throw new NotImageException();
+		}finally {
 			if (autoClose)
 				try {
 					close();
@@ -108,26 +96,16 @@ public class LazyImage implements ImageMatrix{
 	/**
 	 * 对图像数据解码生成 {@link BufferedImage}对象
 	 * 
-	 * @param param
-	 *            图像读取参数对象,为null使用默认参数<br>
-	 *            参见 {@link ImageReader#getDefaultReadParam()}
 	 * @return
 	 * @throws UnsupportedFormatException
 	 * @see ImageReadParam
 	 */
-	protected BufferedImage read(ImageReadParam param) throws UnsupportedFormatException {
+	protected Bitmap read() throws UnsupportedFormatException {
 		try {
-			if(null==this.bufferedImage||null!=param){
-				ImageReader imageReader=getImageReader();
-				if(null==imageReader.getInput())
-					imageReader.setInput(getImageInputstream(), true,true);				
-				BufferedImage bi = imageReader.read(0, null==param?imageReader.getDefaultReadParam():param);
-				if (null==param)
-					this.bufferedImage = bi;
-				else
-					return bi;
+			if(null==this.bitmap){
+				this.bitmap = BitmapFactory.decodeStream(getImageInputstream());
 			}
-			return this.bufferedImage;
+			return this.bitmap;
 		} catch (Exception e) {
 			throw new UnsupportedFormatException(e);
 		} finally {
@@ -140,48 +118,10 @@ public class LazyImage implements ImageMatrix{
 		}
 	}
 
-	/**
-	 * 对图像数据指定的区域解码
-	 * 
-	 * @param rect
-	 *            解码区域对象, 默认({@code null})全图解码<br>
-	 *            参见 {@link ImageReadParam#setSourceRegion(Rectangle)}
-	 * @param destinationType
-	 *            目标图像的所需图像类型,默认为null, <br>
-	 *            例如用此参数可以在解码时指定输出的图像类型为RGB,<br>
-	 *            如下代码 生成 destinationType参数对象：<br>
-	 *            {@code 
-	 *            		ImageTypeSpecifier destinationType=ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_3BYTE_BGR);
-	 *            }<br>
-	 *            用上面的ImageTypeSpecifier对象来调用此方法返回的BufferedImage对象中的raster成员(通过BufferedImage.getData()获取)
-	 *            的getDataElements()方法返回的就是包含RGB数据byte[]类型的数组<br>
-	 *            而直接用BufferedImage.getRGB()方式只能获取ARGB类型的int[]数组 参见
-	 *            {@link ImageReadParam#setDestinationType(ImageTypeSpecifier) }
-	 * @return
-	 * @throws UnsupportedFormatException
-	 * @see #read(ImageReadParam)
-	 */
-	public BufferedImage read(Rectangle rect, ImageTypeSpecifier destinationType) throws UnsupportedFormatException {
-		ImageReadParam param = getImageReader().getDefaultReadParam();
-		if (rect != null && !rect.equals(getRectangle()))
-			param.setSourceRegion(rect);
-		param.setDestinationType(destinationType);		
-		if(null!=destinationType)
-			param.setDestination(destinationType.createBufferedImage(width, height));
-		return read(param);
-	}
-	private static final void assertContains(final Rectangle parent, String argParent, final Rectangle sub, final String argSub)
-			throws IllegalArgumentException {
-		if(!parent.contains(sub))
-			throw new IllegalArgumentException(String.format(
-				"the %s(X%d,Y%d,W%d,H%d) not contained by %s(X%d,Y%d,W%d,H%d)",
-				argSub,sub.x, sub.y,sub.width, sub.height, argParent,parent.x,parent.y,parent.width, parent.height));
-	}
-	
 	@Override
 	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
-			matrixRGB=ImageUtil.getMatrixRGB(read(null));
+			matrixRGB=ImageUtil.getMatrixRGB(read());
 		}
 		return matrixRGB;
 	}
@@ -189,7 +129,7 @@ public class LazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixBGR() throws UnsupportedFormatException{
 		if (matrixBGR==null){	
-			matrixBGR=ImageUtil.getMatrixBGR(read(null));
+			matrixBGR=ImageUtil.getMatrixBGR(read());
 		}
 		return matrixBGR;
 	}
@@ -202,7 +142,7 @@ public class LazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixGray() throws UnsupportedFormatException{		
 		if(null==matrixGray){
-			BufferedImage image = read(null);
+			Bitmap image = read();
 			if(image.getType()==BufferedImage.TYPE_BYTE_GRAY){
 				matrixGray= (byte[]) image.getData().getDataElements(0, 0, width, height, null);
 			}else{
@@ -265,10 +205,10 @@ public class LazyImage implements ImageMatrix{
 	/**
 	 * @param bitmap 已经解码的图像数据,为null或为空,则抛出 {@link IllegalArgumentException}
 	 */
-	public LazyImage(BufferedImage bitmap)
+	public LazyImage(Bitmap bitmap)
 	{
-		Assert.notNull(bitmap, "bufferedImage");
-		this.bufferedImage = bitmap;
+		Assert.notNull(bitmap, "bitmap");
+		this.bitmap = bitmap;
 	}
 	/**
 	 * @param imgBytes 图像数据,{@code imgBytes}为null或为空,则抛出 {@link IllegalArgumentException}
@@ -329,7 +269,7 @@ public class LazyImage implements ImageMatrix{
 	 * 如果 {@link #imageInputstream} 为{@code null},则根据 {@link #imgBytes}或 {@link #localFile}创建
 	 * @return imageInputstream
 	 */
-	private ImageInputStream getImageInputstream() {
+	private InputStream getImageInputstream() {
 		if (null == imageInputstream) {
 			if (null == imgBytes) {
 				if (null == localFile)
@@ -337,31 +277,14 @@ public class LazyImage implements ImageMatrix{
 							"while isValidImage be true localFile & imgBytes can't be NULL all");
 				try {
 					this.fileInputStream=new FileInputStream(localFile);
-					this.imageInputstream = new MemoryCacheImageInputStream(this.fileInputStream);
+					this.imageInputstream = fileInputStream;
 				} catch (FileNotFoundException e) {
 					throw new RuntimeException(e);
 				}
 			}else
-				this.imageInputstream = new MemoryCacheImageInputStream(new ByteArrayInputStream(imgBytes));
+				this.imageInputstream = new ByteArrayInputStream(imgBytes);
 		}
 		return imageInputstream;
-	}
-	
-	/**
-	 * 返回{@link ImageReader}对象<br>
-	 * 如果 {@link #imageReader}为{@code null},则根据 {@link #suffix}创建，失败抛出
-	 * @return imageReader {@link ImageReader}对象
-	 * @throws IllegalStateException 无法根据{@link #suffix}获取{@link ImageReader}
-	 */
-	private ImageReader getImageReader() throws IllegalStateException {
-		if (null == imageReader) {
-			Iterator<ImageReader> it = ImageIO.getImageReadersByFormatName(suffix);
-			if (it.hasNext())
-				imageReader = it.next();
-			else
-				throw new IllegalStateException(String.format("invalid suffix %s", suffix));
-		}
-		return imageReader;
 	}
 
 	/**
@@ -399,10 +322,6 @@ public class LazyImage implements ImageMatrix{
 	 * @throws IOException
 	 */
 	public void close() throws IOException{
-		if(null!=imageReader){
-			imageReader.dispose();
-			imageReader=null;
-		}
 		if(null!=imageInputstream){
 			imageInputstream.close();
 			imageInputstream=null;
@@ -423,9 +342,8 @@ public class LazyImage implements ImageMatrix{
 	public void finalize() throws Throwable {
 		close();
 		this.imgBytes=null;
-		this.bufferedImage=null;
+		this.bitmap=null;
 		this.localFile=null;
-		this.rectangle=null;
 	}
 
 
@@ -440,7 +358,7 @@ public class LazyImage implements ImageMatrix{
 		return height;
 	}
 	/**
-	 * 在执行 {@link #read(ImageReadParam)}或 {@link #open()}之前调用,才有效
+	 * 在执行 {@link #read()}或 {@link #open()}之前调用,才有效
 	 * @param autoClose 要设置的 autoClose
 	 * @return 
 	 * @see #autoClose
@@ -449,14 +367,4 @@ public class LazyImage implements ImageMatrix{
 		this.autoClose = autoClose;
 		return this;
 	}
-
-	/**
-	 * 获取图像矩形对象
-	 * @return rectangle
-	 */
-	public Rectangle getRectangle() {
-		if(null==rectangle)
-			rectangle=new Rectangle(0,0,width,height);
-		return rectangle;
-	}	
 }
