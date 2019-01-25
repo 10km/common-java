@@ -20,7 +20,6 @@ import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import net.gdface.utils.Assert;
 import net.gdface.utils.FaceUtilits;
-import net.gdface.utils.Judge;
 
 /**
  * 图像数据处理对象<br>
@@ -30,46 +29,10 @@ import net.gdface.utils.Judge;
  * @author guyadong
  *
  */
-public class LazyImage implements ImageMatrix{
-	/**
-	 * 图像原始数据(未解码)
-	 */
-	private byte[] imgBytes = null;
-	/**
-	 * RGB格式的图像矩阵数据(全图)
-	 */
-	private byte[] matrixRGB  = null;
-	/**
-	 * BGR格式的图像矩阵数据(全图)
-	 */
-	private byte[] matrixBGR  = null;
-	/**
-	 * 灰度图像矩阵数据(全图)
-	 */
-	protected byte[] matrixGray = null;
- 	/**
-	 * 图像数据本地存储文件
-	 */
-	private File localFile = null;
-	/**
-	 * 图像数据的MD5校验码
-	 */
-	private String md5 = null;	
-	/**
-	 * 图像文件后缀
-	 */
-	private String suffix = null;
-	private int width;
-	private int height;
+public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	private Rectangle rectangle=null;
 	private ImageReader imageReader;
 	private MemoryCacheImageInputStream imageInputstream;
-	private FileInputStream fileInputStream;
-	/**
-	 * 是否在 {@link #open()}和 {@link #read(ImageReadParam)}执行结束时自动执行 {@link #close()}释放资源<br>
-	 * 默认为{@code true}
-	 */
-	private boolean autoClose=true;
 	private BufferedImage bufferedImage=null;
 	/**
 	 * 通过{@link ImageReader}来读取图像基本信息，检查图像数据有效性
@@ -77,6 +40,8 @@ public class LazyImage implements ImageMatrix{
 	 * @throws UnsupportedFormatException 
 	 * @throws NotImageException 
 	 */
+	@SuppressWarnings("unchecked")
+	@Override
 	public LazyImage open() throws UnsupportedFormatException, NotImageException {
 		try {
 			Iterator<ImageReader> it = ImageIO.getImageReaders(getImageInputstream());
@@ -300,8 +265,7 @@ public class LazyImage implements ImageMatrix{
 	 * @param imgBytes 图像数据,{@code imgBytes}为null或为空,则抛出 {@link IllegalArgumentException}
 	 */
 	public LazyImage(byte[] imgBytes) {
-		Assert.notEmpty(imgBytes, "imgBytes");
-		this.imgBytes=imgBytes;
+		super(imgBytes);
 	}
 
 	/**
@@ -311,13 +275,7 @@ public class LazyImage implements ImageMatrix{
 	 * @throws FileNotFoundException
 	 */
 	public LazyImage(File src, String md5) throws FileNotFoundException {
-		Assert.notNull(src, "src");
-		this.localFile = src;
-		if(!localFile.exists()||!localFile.isFile()||0==localFile.length())
-			throw new FileNotFoundException(String.format("NOT EXIST OR NOT FILE OR ZERO bytes%s",localFile.getAbsolutePath()));
-		String fileName = localFile.getName();
-		this.suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
-		this.md5 = md5;
+		super(src, md5);
 	}
 	
 	/**
@@ -330,26 +288,6 @@ public class LazyImage implements ImageMatrix{
 		this(FaceUtilits.getBytesNotEmpty(src));		
 	}
 
-	/**
-	 * 返回图像数据字节数组<br>
-	 * 如果图像数据在本地文件中，则方法第一次被调用时将数据从文件中读取到内存
-	 * @return the imgBytes,如果为无效图像，则返回null
-	 * @throws IllegalArgumentException 参数错误
-	 */
-	public byte[] getImgBytes() {
-
-		if(null==imgBytes){
-			if(null!=localFile){
-				try {
-					imgBytes = FaceUtilits.getBytesNotEmpty(localFile);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}else
-				throw new IllegalArgumentException("while isValidImage be true localFile & imgBytes can't be NULL all");
-		}
-		return imgBytes;
-	}
 	/**
 	 * 返回{@link ImageInputStream}对象<br>
 	 * 如果 {@link #imageInputstream} 为{@code null},则根据 {@link #imgBytes}或 {@link #localFile}创建
@@ -391,36 +329,6 @@ public class LazyImage implements ImageMatrix{
 	}
 
 	/**
-	 * @return the md5
-	 */
-	public String getMd5() {
-		if (null == md5)
-			md5 = FaceUtilits.getMD5String(getImgBytes());
-		return md5;
-	}
-
-	/**
-	 * @return the suffix
-	 */
-	public String getSuffix() {
-		return suffix;
-	}
-
-	/**
-	 * 以 {@link #md5}为名字将文件保存在{@code folder}文件夹下<br>
-	 * 如果同名文件存在，且长度不为0时不覆盖
-	 * @param folder
-	 * @return
-	 * @throws IOException
-	 * @see FaceUtilits#saveBytes(byte[], File, boolean)
-	 */
-	public File save(File folder) throws IOException {
-		File file = new File(folder,getMd5()+(Judge.isEmpty(this.suffix)?"":"."+this.suffix));
-		localFile= FaceUtilits.saveBytes(getImgBytes(), file, file.exists()&&file.isFile()&&0==file.length());		
-		return localFile;
-	}
-	
-	/**
 	 * 释放资源
 	 * @throws IOException
 	 */
@@ -433,48 +341,15 @@ public class LazyImage implements ImageMatrix{
 			imageInputstream.close();
 			imageInputstream=null;
 		}
-		if(null!=fileInputStream){
-			fileInputStream.close();
-			fileInputStream=null;
-		}
+		super.close();
 	}
-	/**
-	 * @return localFile
-	 */
-	public File getLocalFile() {
-		return localFile;
-	}
-	
 	@Override
 	public void finalize() throws Throwable {
-		close();
-		this.imgBytes=null;
 		this.bufferedImage=null;
-		this.localFile=null;
 		this.rectangle=null;
+		super.finalize();
 	}
 
-
-	@Override
-	public int getWidth() {
-		return width;
-	}
-
-
-	@Override
-	public int getHeight() {
-		return height;
-	}
-	/**
-	 * 在执行 {@link #read(ImageReadParam)}或 {@link #open()}之前调用,才有效
-	 * @param autoClose 要设置的 autoClose
-	 * @return 
-	 * @see #autoClose
-	 */
-	public LazyImage setAutoClose(boolean autoClose) {
-		this.autoClose = autoClose;
-		return this;
-	}
 
 	/**
 	 * 获取图像矩形对象
