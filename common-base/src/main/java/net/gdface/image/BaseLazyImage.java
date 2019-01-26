@@ -4,13 +4,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 import net.gdface.utils.Assert;
+import net.gdface.utils.BaseVolatile;
 import net.gdface.utils.FaceUtilits;
 import net.gdface.utils.Judge;
 
 public abstract class BaseLazyImage implements ImageMatrix {
+	private static final BaseVolatile<LazyImageFactory> lazyImageFactory = new BaseVolatile<LazyImageFactory>(){
 
+		@Override
+		protected LazyImageFactory doGet() {
+			/* SPI(Service Provider Interface)机制加载 {@link LazyImageFactory}实例,没有找到则抛出异常 */
+			ServiceLoader<LazyImageFactory> providers = ServiceLoader.load(LazyImageFactory.class);
+			Iterator<LazyImageFactory> driversIterator = providers.iterator();
+			if(!driversIterator.hasNext()){
+				throw new NotFoundLazyImageFactoryException();
+			}
+			return driversIterator.next();
+		}};
 	/**
 	 * 图像原始数据(未解码)
 	 */
@@ -173,4 +187,13 @@ public abstract class BaseLazyImage implements ImageMatrix {
 		localFile= FaceUtilits.saveBytes(getImgBytes(), file, file.exists()&&file.isFile()&&0==file.length());		
 		return localFile;
 	}
+	/**
+	 * 返回当前 {@link LazyImageFactory}实例
+	 * @return
+	 * @throws NotFoundLazyImageFactoryException
+	 */
+	public static final LazyImageFactory getLazyImageFactory() throws NotFoundLazyImageFactoryException{
+		return lazyImageFactory.get();
+	}
+
 }
