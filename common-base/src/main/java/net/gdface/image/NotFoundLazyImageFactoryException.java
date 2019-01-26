@@ -1,15 +1,12 @@
 package net.gdface.image;
 
 /**
- * 没有找到{@link LazyImageFactory}实例
+ * 没有找到{@link LazyImageFactory}实例异常
  * @author guyadong
  *
  */
 public class NotFoundLazyImageFactoryException extends RuntimeException {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public NotFoundLazyImageFactoryException(Throwable cause) {

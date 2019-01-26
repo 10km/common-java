@@ -10,10 +10,15 @@ import java.util.ServiceLoader;
 import net.gdface.utils.Assert;
 import net.gdface.utils.BaseVolatile;
 import net.gdface.utils.FaceUtilits;
+import net.gdface.utils.ILazyInitVariable;
 import net.gdface.utils.Judge;
-
+/**
+ * 图像数据处理对象<br>
+ * @author guyadong
+ *
+ */
 public abstract class BaseLazyImage implements ImageMatrix {
-	private static final BaseVolatile<LazyImageFactory> lazyImageFactory = new BaseVolatile<LazyImageFactory>(){
+	private static final ILazyInitVariable<LazyImageFactory> lazyImageFactory = new BaseVolatile<LazyImageFactory>(){
 
 		@Override
 		protected LazyImageFactory doGet() {
