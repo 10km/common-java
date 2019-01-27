@@ -26,7 +26,7 @@ public class DecoratorThriftFieldMetadata extends ThriftFieldMetadata {
     private static Boolean primitiveOptional = null;
     private static Boolean objectOptional = null;
     private final Type javaType;
-	DecoratorThriftFieldMetadata(ThriftFieldMetadata input){
+	public DecoratorThriftFieldMetadata(ThriftFieldMetadata input){
         super(
                 input.getId(),
                 input.getRequiredness(),
