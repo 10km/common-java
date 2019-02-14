@@ -328,7 +328,9 @@ public class ThriftUtils {
 	public static boolean isPrimitivefloat(Type type){
 		return type == float.class;
 	}
-
+	public static boolean isfloat(Type type){
+		return type == float.class || type == Float.class;
+	}
 	public static boolean isCastType(Type type){
 		return  CAST_TYPES.containsKey(type);
 	}
