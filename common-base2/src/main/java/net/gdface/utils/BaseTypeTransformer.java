@@ -241,7 +241,9 @@ public class BaseTypeTransformer {
 		transTable.put(Float.class,Double.class,float2DoubleFun);
 		transTable.put(Double.class,Float.class,double2FloatFun);
 		transTable.put(float.class,double.class,float2DoubleFun);
+		transTable.put(float.class,Double.class,float2DoubleFun);
 		transTable.put(double.class,float.class,double2FloatFun);
+		transTable.put(double.class,Float.class,double2FloatFun);
 		transTable.put(Date.class, Long.class, date2LongFunction);
 		transTable.put(java.sql.Date.class, Long.class, date2LongFunction);
 		transTable.put(java.sql.Time.class,Long.class,date2LongFunction);
