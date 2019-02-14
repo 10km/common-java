@@ -356,7 +356,7 @@ public class ThriftUtils {
 	}
 
 	public static boolean needTransformer(Type type){
-		return !isThriftBuildinType(type) && ! isPrimitivefloat(type);
+		return ! isThriftBuildinType(type) ;
 	}
 	public static interface Action{
 		void doClass(Class<?> type);
