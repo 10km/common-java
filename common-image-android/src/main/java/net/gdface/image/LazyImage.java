@@ -157,6 +157,19 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		return new LazyImage(imgBytes).open();
 	}
 	/**
+	 * 创建对象
+	 * @param bitmap
+	 * @return
+	 * @see #LazyImage(Bitmap)
+	 * @see #open()	 */
+	public static LazyImage create(final Bitmap bitmap) {
+		try {
+			return new LazyImage(bitmap).open();
+		} catch (ImageErrorException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	/**
 	 * 用本地图像文件创建对象
 	 * @param file
 	 * @param md5 {@code file}的MD5较验码，可以为null
