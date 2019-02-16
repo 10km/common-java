@@ -31,12 +31,17 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public LazyImage open() throws UnsupportedFormatException, NotImageException {
 		try {
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inJustDecodeBounds = true;
-			Bitmap img = BitmapFactory.decodeStream(getImageInputstream(),null, options);
-			this.width = img.getWidth();
-			this.height = img.getHeight();
-			this.suffix = options.outMimeType;
+			if(bitmap == null){
+				BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inJustDecodeBounds = true;
+				Bitmap img = BitmapFactory.decodeStream(getImageInputstream(),null, options);
+				this.width = img.getWidth();
+				this.height = img.getHeight();
+				this.suffix = options.outMimeType;
+			}else{
+				this.width = bitmap.getWidth();
+				this.height = bitmap.getHeight();
+			}
 			return this;
 		} catch(Exception e){
 			throw new NotImageException();

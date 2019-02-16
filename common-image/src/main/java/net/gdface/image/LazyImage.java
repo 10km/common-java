@@ -44,21 +44,26 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public LazyImage open() throws UnsupportedFormatException, NotImageException {
 		try {
-			Iterator<ImageReader> it = ImageIO.getImageReaders(getImageInputstream());
-			if (it.hasNext())
-				try {
-					imageReader = it.next();
-					imageReader.setInput(getImageInputstream(), true, true);
-					this.suffix = imageReader.getFormatName().trim().toLowerCase();
-					this.width = imageReader.getWidth(0);
-					this.height = imageReader.getHeight(0);
-					return this;
-				} catch (Exception e) {
-					throw new UnsupportedFormatException(e);
-				} 
-			else {
-				throw new NotImageException();
+			if(bufferedImage == null){
+				Iterator<ImageReader> it = ImageIO.getImageReaders(getImageInputstream());
+				if (it.hasNext())
+					try {
+						imageReader = it.next();
+						imageReader.setInput(getImageInputstream(), true, true);
+						this.suffix = imageReader.getFormatName().trim().toLowerCase();
+						this.width = imageReader.getWidth(0);
+						this.height = imageReader.getHeight(0);
+					} catch (Exception e) {
+						throw new UnsupportedFormatException(e);
+					} 
+				else {
+					throw new NotImageException();
+				}
+			}else{
+				this.width = bufferedImage.getWidth();
+				this.height = bufferedImage.getHeight();
 			}
+			return this;
 		} finally {
 			if (autoClose)
 				try {
