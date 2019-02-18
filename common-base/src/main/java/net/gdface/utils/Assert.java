@@ -25,12 +25,18 @@ public class Assert {
 		if (!t)
 			throw new IllegalArgumentException(String.format("%s:experssion '%s' must be true",getLocation(),expression));
 	}
-
+	public static final <T>void isTrue(boolean t,String expression,String msg){
+		if (!t)
+			throw new IllegalArgumentException(String.format("%s:experssion '%s' must be true,%s",getLocation(),expression,msg));
+	}
 	public static final <T>void notNull(T t,String arg){
 		if (null == t)
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null",getLocation(),arg));		
 	}
-
+	public static final <T>void notNull(T t,String arg,String msg){
+		if (null == t)
+			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null,%s",getLocation(),arg,msg));		
+	}
 	public static final <T>void notEmpty(T[] t,String arg){
 		if (null == t||0==t.length)
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
@@ -83,6 +89,11 @@ public class Assert {
 	public static final void notEmpty(String t,String arg){
 		if (null == t||0==t.length())
 			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty",getLocation(),arg));		
+	}
+
+	public static final void notEmpty(String t,String arg,String msg){
+		if (null == t||0==t.length())
+			throw new IllegalArgumentException(String.format("%s:the argument %s must not be null or empty,%s",getLocation(),arg,msg));		
 	}
 	public static final void notEmpty(Buffer t,String arg){
 		if (null == t || !t.hasRemaining())
