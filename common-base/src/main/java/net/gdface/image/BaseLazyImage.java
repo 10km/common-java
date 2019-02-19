@@ -24,11 +24,11 @@ public abstract class BaseLazyImage implements ImageMatrix {
 		protected LazyImageFactory doGet() {
 			/* SPI(Service Provider Interface)机制加载 {@link LazyImageFactory}实例,没有找到则抛出异常 */
 			ServiceLoader<LazyImageFactory> providers = ServiceLoader.load(LazyImageFactory.class);
-			Iterator<LazyImageFactory> driversIterator = providers.iterator();
-			if(!driversIterator.hasNext()){
+			Iterator<LazyImageFactory> itor = providers.iterator();
+			if(!itor.hasNext()){
 				throw new NotFoundLazyImageFactoryException();
 			}
-			return driversIterator.next();
+			return itor.next();
 		}};
 	/**
 	 * 图像原始数据(未解码)
