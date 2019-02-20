@@ -33,11 +33,19 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		try {
 			if(bitmap == null){
 				BitmapFactory.Options options = new BitmapFactory.Options();
+				// 只获取宽高基本信息，不对图像解码
 				options.inJustDecodeBounds = true;
-				Bitmap img = BitmapFactory.decodeStream(getImageInputstream(),null, options);
-				this.width = img.getWidth();
-				this.height = img.getHeight();
-				this.suffix = options.outMimeType;
+				BitmapFactory.decodeStream(getImageInputstream(),null, options);
+				this.width = options.outWidth;
+				this.height = options.outHeight;
+				//  outMimeType 字段 '/'后面的部分作为后缀
+				// Example: outMimeType=image/jpeg suffix = jpeg 
+				int slash = options.outMimeType.lastIndexOf('/');
+				if(slash<0){
+					this.suffix = options.outMimeType;
+				}else{
+					this.suffix = options.outMimeType.substring(slash + 1);
+				}
 			}else{
 				this.width = bitmap.getWidth();
 				this.height = bitmap.getHeight();
