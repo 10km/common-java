@@ -1,11 +1,8 @@
 package net.gdface.image;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -19,7 +16,6 @@ import net.gdface.utils.FaceUtilits;
  *
  */
 public class LazyImage extends BaseLazyImage implements ImageMatrix{
-	private InputStream imageInputstream;
 	private Bitmap bitmap=null;
 	/**
 	 * 通过{@link ImageReader}来读取图像基本信息，检查图像数据有效性
@@ -35,7 +31,8 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 				BitmapFactory.Options options = new BitmapFactory.Options();
 				// 只获取宽高基本信息，不对图像解码
 				options.inJustDecodeBounds = true;
-				BitmapFactory.decodeStream(getImageInputstream(),null, options);
+				byte[] data = getBytes();
+				BitmapFactory.decodeByteArray(data,0,data.length, options);
 				this.width = options.outWidth;
 				this.height = options.outHeight;
 				//  outMimeType 字段 '/'后面的部分作为后缀
@@ -72,11 +69,17 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	 */
 	protected Bitmap read() throws UnsupportedFormatException {
 		try {
-			if(null==this.bitmap){
-				this.bitmap = BitmapFactory.decodeStream(getImageInputstream());
+			if(null == this.bitmap){
+				byte[] data = getBytes();
+				this.bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
+				if(null == bitmap){
+					throw new UnsupportedFormatException("decode image error");
+				}
 			}
 			return this.bitmap;
-		} catch (Exception e) {
+		} catch (UnsupportedFormatException e) {
+			throw e;
+		}catch (Exception e) {
 			throw new UnsupportedFormatException(e);
 		} finally {
 			if(autoClose)
@@ -96,11 +99,11 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 			int line = 0;
 			int color;
 			for(int y = 0 ;y < bitmap.getHeight();++y,line += bitmap.getWidth()*3){
-				for(int x = 0; x < bitmap.getWidth() ; ++x){
+				for(int x = 0,offset=0; x < bitmap.getWidth() ; ++x,offset+=3){
 					color = bitmap.getPixel(x, y);
-					matrixRGB[line +x      ] = (byte) Color.red(color);
-					matrixRGB[line +x + 1] = (byte) Color.green(color);
-					matrixRGB[line +x + 2] = (byte) Color.blue(color);
+					matrixRGB[line + offset      ] = (byte) Color.red(color);
+					matrixRGB[line + offset + 1] = (byte) Color.green(color);
+					matrixRGB[line + offset + 2] = (byte) Color.blue(color);
 				}
 			}
 		}
@@ -112,14 +115,13 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		if (matrixBGR==null){	
 			Bitmap bitmap = read();
 			matrixBGR = new byte[bitmap.getWidth() * bitmap.getHeight() * 3];
-			int line = 0;
 			int color;
-			for(int y = 0 ;y < bitmap.getHeight();++y,line += bitmap.getWidth()*3){
-				for(int x = 0; x < bitmap.getWidth() ; ++x){
+			for(int y = 0,line = 0 ;y < bitmap.getHeight();++y,line += bitmap.getWidth()*3){				
+				for(int x = 0, offset = 0; x < bitmap.getWidth() ; ++x, offset += 3){
 					color = bitmap.getPixel(x, y);
-					matrixBGR[line +x      ] = (byte) Color.blue(color);
-					matrixBGR[line +x + 1] = (byte) Color.green(color);
-					matrixBGR[line +x + 2] = (byte) Color.red(color);
+					matrixBGR[line + offset      ] = (byte) Color.blue(color);
+					matrixBGR[line + offset + 1] = (byte) Color.green(color);
+					matrixBGR[line + offset + 2] = (byte) Color.red(color);
 				}
 			}
 		}
@@ -136,9 +138,8 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		if(null==matrixGray){
 			Bitmap img = read();
 			matrixGray = new byte[img.getWidth() * img.getHeight() ];
-			int line = 0;
 			int color,R,G,B;
-			for(int y = 0 ;y < img.getHeight();++y,line += img.getWidth()){
+			for(int y = 0 ,line = 0;y < img.getHeight();++y,line += img.getWidth()){
 				for(int x = 0; x < img.getWidth() ; ++x){
 					color = img.getPixel(x, y);
 					R = Color.red(color);
@@ -253,39 +254,24 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	}
 
 	/**
-	 * 返回{@link ImageInputStream}对象<br>
-	 * 如果 {@link #imageInputstream} 为{@code null},则根据 {@link #imgBytes}或 {@link #localFile}创建
-	 * @return imageInputstream
+	 * 返回图像字节数组<br>
+	 * 如果 {@link #imgBytes} 为{@code null},则根据 {@link #localFile}创建
+	 * @return 
 	 */
-	private InputStream getImageInputstream() {
-		if (null == imageInputstream) {
-			if (null == imgBytes) {
-				if (null == localFile)
-					throw new IllegalArgumentException(
-							"while isValidImage be true localFile & imgBytes can't be NULL all");
-				try {
-					this.fileInputStream=new FileInputStream(localFile);
-					this.imageInputstream = fileInputStream;
-				} catch (FileNotFoundException e) {
-					throw new RuntimeException(e);
-				}
-			}else
-				this.imageInputstream = new ByteArrayInputStream(imgBytes);
+	private byte[] getBytes() {
+		if (null == imgBytes) {
+			if (null == localFile)
+				throw new IllegalArgumentException(
+						"while isValidImage be true localFile & imgBytes can't be NULL all");
+			try {
+				this.imgBytes = FaceUtilits.getBytesNotEmpty(localFile);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
-		return imageInputstream;
+		return imgBytes;
 	}
 
-	/**
-	 * 释放资源
-	 * @throws IOException
-	 */
-	public void close() throws IOException{
-		if(null!=imageInputstream){
-			imageInputstream.close();
-			imageInputstream=null;
-		}
-		super.close();
-	}
 	@Override
 	public void finalize() throws Throwable {
 		this.bitmap=null;
