@@ -1,7 +1,6 @@
 package net.gdface.image;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
@@ -65,7 +64,6 @@ public abstract class BaseLazyImage implements ImageMatrix {
 	 * 灰度图像矩阵数据(全图)
 	 */
 	protected byte[] matrixGray = null;
-	protected FileInputStream fileInputStream;
 
 	protected BaseLazyImage() {
 	}
@@ -161,10 +159,7 @@ public abstract class BaseLazyImage implements ImageMatrix {
 	 * @throws IOException
 	 */
 	public void close() throws IOException{
-		if(null!=fileInputStream){
-			fileInputStream.close();
-			fileInputStream=null;
-		}
+
 	}
 	@Override
 	public void finalize() throws Throwable {

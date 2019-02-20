@@ -53,10 +53,11 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 						this.suffix = imageReader.getFormatName().trim().toLowerCase();
 						this.width = imageReader.getWidth(0);
 						this.height = imageReader.getHeight(0);
-					} catch (Exception e) {
+					} catch (Exception e) {						
 						throw new UnsupportedFormatException(e);
 					} 
 				else {
+					// 没有找到对应的图像解码则招聘异常
 					throw new NotImageException();
 				}
 			}else{
@@ -140,14 +141,6 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 			param.setDestination(destinationType.createBufferedImage(width, height));
 		return read(param);
 	}
-	private static final void assertContains(final Rectangle parent, String argParent, final Rectangle sub, final String argSub)
-			throws IllegalArgumentException {
-		if(!parent.contains(sub))
-			throw new IllegalArgumentException(String.format(
-				"the %s(X%d,Y%d,W%d,H%d) not contained by %s(X%d,Y%d,W%d,H%d)",
-				argSub,sub.x, sub.y,sub.width, sub.height, argParent,parent.x,parent.y,parent.width, parent.height));
-	}
-	
 	@Override
 	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
@@ -163,32 +156,6 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		}
 		return matrixBGR;
 	}
-	/**
-	 * 从matrix矩阵中截取rect指定区域的子矩阵
-	 * @param matrix 3byte(RGB/BGR) 图像矩阵
-	 * @param matrixRect 矩阵尺寸
-	 * @param rect 截取区域
-	 * @return 
-	 */
-	public static byte[] cutMatrix(byte[] matrix,Rectangle matrixRect,Rectangle rect) {
-		// 解码区域,为null或与图像尺寸相等时直接返回 matrix
-		if((rect == null || rect.equals(matrixRect)))
-			return matrix;
-		else{
-			// 如果指定的区域超出图像尺寸，则抛出异常
-			assertContains(matrixRect, "srcRect", rect ,"rect");
-			byte[] dstArray=new byte[rect.width*rect.height*3];	
-			// 从 matrix 中复制指定区域的图像数据返回
-			for(int dstIndex=0,srcIndex=(rect.y*matrixRect.width+rect.x)*3,y=0;
-					y<rect.height;
-					++y,srcIndex+=matrixRect.width*3,dstIndex+=rect.width*3){
-				// 调用 System.arrayCopy每次复制一行数据
-				System.arraycopy(matrix, srcIndex, dstArray, dstIndex, rect.width*3);
-			}
-			return dstArray;
-		}
-	}
-	
 	/**
 	 *  对图像数据指定的区域解码返回灰度图像数据
 	 * @param rect 解码区域,为null时全图解码
@@ -319,13 +286,13 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 					throw new IllegalArgumentException(
 							"while isValidImage be true localFile & imgBytes can't be NULL all");
 				try {
-					this.fileInputStream=new FileInputStream(localFile);
-					this.imageInputstream = new MemoryCacheImageInputStream(this.fileInputStream);
+					this.imageInputstream = new MemoryCacheImageInputStream(new FileInputStream(localFile));
 				} catch (FileNotFoundException e) {
 					throw new RuntimeException(e);
 				}
-			}else
+			}else{
 				this.imageInputstream = new MemoryCacheImageInputStream(new ByteArrayInputStream(imgBytes));
+			}
 		}
 		return imageInputstream;
 	}

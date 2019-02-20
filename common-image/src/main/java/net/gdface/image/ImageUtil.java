@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
@@ -461,5 +462,37 @@ public class ImageUtil {
 			e.printStackTrace();
 		}*/
 	    return  img;	    
+	}
+	private static void assertContains(final Rectangle parent, String argParent, final Rectangle sub, final String argSub)
+			throws IllegalArgumentException {
+		if(!parent.contains(sub))
+			throw new IllegalArgumentException(String.format(
+				"the %s(X%d,Y%d,W%d,H%d) not contained by %s(X%d,Y%d,W%d,H%d)",
+				argSub,sub.x, sub.y,sub.width, sub.height, argParent,parent.x,parent.y,parent.width, parent.height));
+	}
+	/**
+	 * 从matrix矩阵中截取rect指定区域的子矩阵
+	 * @param matrix 3byte(RGB/BGR) 图像矩阵
+	 * @param matrixRect 矩阵尺寸
+	 * @param rect 截取区域
+	 * @return 
+	 */
+	public static byte[] cutMatrix(byte[] matrix,Rectangle matrixRect,Rectangle rect) {
+		// 解码区域,为null或与图像尺寸相等时直接返回 matrix
+		if((rect == null || rect.equals(matrixRect)))
+			return matrix;
+		else{
+			// 如果指定的区域超出图像尺寸，则抛出异常
+			ImageUtil.assertContains(matrixRect, "srcRect", rect ,"rect");
+			byte[] dstArray=new byte[rect.width*rect.height*3];	
+			// 从 matrix 中复制指定区域的图像数据返回
+			for(int dstIndex=0,srcIndex=(rect.y*matrixRect.width+rect.x)*3,y=0;
+					y<rect.height;
+					++y,srcIndex+=matrixRect.width*3,dstIndex+=rect.width*3){
+				// 调用 System.arrayCopy每次复制一行数据
+				System.arraycopy(matrix, srcIndex, dstArray, dstIndex, rect.width*3);
+			}
+			return dstArray;
+		}
 	}
 }
