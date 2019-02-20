@@ -71,6 +71,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		try {
 			if(null == this.bitmap){
 				byte[] data = getBytes();
+				// 对图像数据解码，解码失败抛出异常
 				this.bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
 				if(null == bitmap){
 					throw new UnsupportedFormatException("decode image error");
