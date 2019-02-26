@@ -124,4 +124,15 @@ public class NativeUtils {
         
         return generatedDir;
     }
+    /**
+     * 从jar包中位置'/lib/os_prefix'加载指定名字的动态库<br>
+     * os_prefix由{@link Platform#getNativeLibraryResourcePrefix()}计算
+     * @param name 库名
+     * @throws IOException
+     * @see {@link #loadLibraryFromJar(String, Class)}
+     */
+    public static void loadFromJar(String name) throws IOException {
+    	String prefix = Platform.getNativeLibraryResourcePrefix();
+    	loadLibraryFromJar("/lib/" + prefix +"/" + System.mapLibraryName(name));
+    }
 }
