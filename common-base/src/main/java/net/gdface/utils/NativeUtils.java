@@ -23,9 +23,12 @@
  */
 package net.gdface.utils;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * 从jar包中加载指定路径下的动态库<br>
@@ -35,11 +38,8 @@ import java.nio.file.StandardCopyOption;
  *
  */
 public class NativeUtils {
- 
-    /**
-     * The minimum length a prefix for a file has to have according to {@link File#createTempFile(String, String)}}.
-     */
-    private static final int MIN_PREFIX_LENGTH = 3;
+    // buffer size used for reading and writing
+    private static final int BUFFER_SIZE = 8192;
     public static final String NATIVE_FOLDER_PATH_PREFIX = "nativeutils";
 
     /**
@@ -55,6 +55,14 @@ public class NativeUtils {
 
     /**
      * Loads library from current JAR archive
+     * @see #copyToTempFromJar(String, Class) 
+     */
+    public static synchronized void loadLibraryFromJar(String path, Class<?> loadClass) throws IOException {
+    	File temp = copyToTempFromJar(path,loadClass);
+        System.load(temp.getAbsolutePath());
+    }
+    /**
+     * copy file from current JAR archive
      * 
      * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after
      * exiting.
@@ -67,19 +75,10 @@ public class NativeUtils {
      * (restriction of {@link File#createTempFile(java.lang.String, java.lang.String)}).
      * @throws FileNotFoundException If the file could not be found inside the JAR.
      */
-    public static synchronized void loadLibraryFromJar(String path, Class<?> loadClass) throws IOException {
- 
+    public static synchronized File copyToTempFromJar(String path, Class<?> loadClass) throws IOException {
+    	 
         if (null == path || !path.startsWith("/")) {
             throw new IllegalArgumentException("The path has to be absolute (start with '/').");
-        }
- 
-        // Obtain filename from path
-        String[] parts = path.split("/");
-        String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
- 
-        // Check if the filename is okay
-        if (filename == null || filename.length() < MIN_PREFIX_LENGTH) {
-            throw new IllegalArgumentException("The filename has to be at least 3 characters long.");
         }
  
         // Prepare temporary file
@@ -88,23 +87,25 @@ public class NativeUtils {
             temporaryDir.deleteOnExit();
         }
 
-        File temp = new File(temporaryDir, filename);
+        File temp = new File(temporaryDir, path);
         Class<?> clazz = loadClass == null ? NativeUtils.class	: loadClass;
-        try (InputStream is = clazz.getResourceAsStream(path)) {
-            Files.copy(is, temp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        InputStream is = clazz.getResourceAsStream(path);
+        try{
+            copy(is, temp);
+            temp.deleteOnExit();
+            return temp;
         } catch (IOException e) {
             temp.delete();
             throw e;
         } catch (NullPointerException e) {
             temp.delete();
             throw new FileNotFoundException("File " + path + " was not found inside JAR.");
-        }
-
-        try {
-            System.load(temp.getAbsolutePath());
         } finally {
-        	temp.deleteOnExit();
-        }
+			is.close();
+		}       
+    }
+    public static synchronized File copyToTempFromJar(String path) throws IOException {
+    	return copyToTempFromJar(path, null);
     }
     /**
      * 从jar包中加载指定的动态库
@@ -118,7 +119,6 @@ public class NativeUtils {
     private static File createTempDirectory(String prefix) throws IOException {
         String tempDir = System.getProperty("java.io.tmpdir");
         File generatedDir = new File(tempDir, prefix + System.nanoTime());
-        
         if (!generatedDir.mkdir())
             throw new IOException("Failed to create temp directory " + generatedDir.getName());
         
@@ -134,5 +134,38 @@ public class NativeUtils {
     public static void loadFromJar(String name) throws IOException {
     	String prefix = Platform.getNativeLibraryResourcePrefix();
     	loadLibraryFromJar("/lib/" + prefix +"/" + System.mapLibraryName(name));
+    }
+
+	public static File getTemporaryDir() {
+		return temporaryDir;
+	}
+    private static long copy(InputStream in, File target) throws IOException  {
+    	target.delete();
+		File parent = target.getParentFile();
+        if (parent != null){
+        	parent.mkdirs();
+        }
+    	OutputStream out = new FileOutputStream(target);
+    	// do the copy
+    	try {
+    		return copy(in, out);
+    	}finally{
+    		out.close();
+    	}
+    }
+    /**
+     * Reads all bytes from an input stream and writes them to an output stream.
+     */
+    private static long copy(InputStream source, OutputStream dest)
+        throws IOException
+    {
+        long nread = 0L;
+        byte[] buf = new byte[BUFFER_SIZE];
+        int n;
+        while ((n = source.read(buf)) > 0) {
+            dest.write(buf, 0, n);
+            nread += n;
+        }
+        return nread;
     }
 }
