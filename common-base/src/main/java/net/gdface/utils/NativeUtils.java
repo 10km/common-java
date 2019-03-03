@@ -62,7 +62,7 @@ public class NativeUtils {
         System.load(temp.getAbsolutePath());
     }
     /**
-     * copy file from current JAR archive
+     * copy file from current JAR archive to system temporary directory
      * 
      * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after
      * exiting.
@@ -104,7 +104,10 @@ public class NativeUtils {
 			is.close();
 		}       
     }
-    public static synchronized File copyToTempFromJar(String path) throws IOException {
+    /**
+	 * @see {@link #copyToTempFromJar(String, Class)}
+     */
+    public static File copyToTempFromJar(String path) throws IOException {
     	return copyToTempFromJar(path, null);
     }
     /**
