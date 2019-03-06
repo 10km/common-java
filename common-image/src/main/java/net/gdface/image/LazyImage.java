@@ -1,9 +1,7 @@
 package net.gdface.image;
 
 import java.awt.Rectangle;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorConvertOp;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -165,16 +163,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixGray() throws UnsupportedFormatException{		
 		if(null==matrixGray){
-			BufferedImage image = read(null);
-			if(image.getType()==BufferedImage.TYPE_BYTE_GRAY){
-				matrixGray= (byte[]) image.getData().getDataElements(0, 0, width, height, null);
-			}else{
-				// 图像转灰
-				BufferedImage grayImage = new BufferedImage(width, height,  
-		                BufferedImage.TYPE_BYTE_GRAY);
-				new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null).filter(image, grayImage);
-			    matrixGray= (byte[]) grayImage.getData().getDataElements(0, 0, width, height, null);		
-			}
+			matrixGray = ImageUtil.getMatrixGRAY(read(null));
 		}
 		return matrixGray;
 

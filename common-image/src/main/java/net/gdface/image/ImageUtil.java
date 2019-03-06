@@ -35,7 +35,7 @@ import javax.imageio.stream.ImageOutputStream;
 import net.gdface.utils.Assert;
 
 /**
- * 图像缩放工具类
+ * 图像工具类
  * @author guyadong
  *
  */
@@ -215,7 +215,13 @@ public class ImageUtil {
 		}
 		return false;		
 	}
-
+	public static boolean isBGRA(BufferedImage image){
+		return image.getType()==BufferedImage.TYPE_4BYTE_ABGR
+					|| image.getType()==BufferedImage.TYPE_4BYTE_ABGR_PRE;			
+	}
+	public static boolean isGray(BufferedImage image){
+		return image.getType()==BufferedImage.TYPE_BYTE_GRAY;			
+	}
 	public static boolean isBGR3Byte(BufferedImage image){
 		return equalBandOffsetWith3Byte(image,new int[]{0, 1, 2});
 	}
@@ -245,6 +251,27 @@ public class ImageUtil {
 		} 
 		return matrixRGB;
 	}
+	/**
+	 * 对图像解码返回RGB格式矩阵数据
+	 * @param image
+	 * @return 
+	 */
+	public static byte[] getMatrixRGBA(BufferedImage image) {
+		if(null==image){
+			throw new NullPointerException();
+		}
+		byte[] matrixRGBA;
+		if(isBGRA(image)){
+			matrixRGBA= (byte[]) image.getData().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+		}else{
+			// 转RGBA格式
+			BufferedImage rgbaImage = new BufferedImage(image.getWidth(), image.getHeight(),  
+	                BufferedImage.TYPE_4BYTE_ABGR);
+			new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_sRGB), null).filter(image, rgbaImage);
+			matrixRGBA= (byte[]) rgbaImage.getData().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+		} 
+		return matrixRGBA;
+	}
 
 	/**
 	 * 对图像解码返回BGR格式矩阵数据
@@ -270,6 +297,28 @@ public class ImageUtil {
 			}
 		} 
 		return matrixBGR;
+	}
+	/**
+	 * 对图像解码返回BGR格式矩阵数据
+	 * @param image
+	 * @return
+	 */
+	public static byte[] getMatrixGRAY(BufferedImage image){
+		if(null==image){
+			throw new NullPointerException();
+		}
+		byte[] matrixGray;
+		if(isGray(image)){
+			matrixGray= (byte[]) image.getData().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+		}else{			
+			// 图像转灰
+			BufferedImage gray = new BufferedImage(image.getWidth(), image.getHeight(),  
+	                BufferedImage.TYPE_BYTE_GRAY);
+			new ColorConvertOp(ColorSpace.getInstance(ColorSpace.CS_GRAY), null).filter(image, gray);
+		    matrixGray= (byte[]) gray.getData().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);	
+			
+		} 
+		return matrixGray;
 	}
 	
 	/**

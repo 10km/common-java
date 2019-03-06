@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import net.gdface.utils.Assert;
 import net.gdface.utils.FaceUtilits;
 
@@ -95,18 +94,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
-			Bitmap bitmap = read();
-			matrixRGB = new byte[bitmap.getWidth() * bitmap.getHeight() * 3];
-			int line = 0;
-			int color;
-			for(int y = 0 ;y < bitmap.getHeight();++y,line += bitmap.getWidth()*3){
-				for(int x = 0,offset=0; x < bitmap.getWidth() ; ++x,offset+=3){
-					color = bitmap.getPixel(x, y);
-					matrixRGB[line + offset      ] = (byte) Color.red(color);
-					matrixRGB[line + offset + 1] = (byte) Color.green(color);
-					matrixRGB[line + offset + 2] = (byte) Color.blue(color);
-				}
-			}
+			matrixRGB = ImageUtil.getMatrixRGB(read());
 		}
 		return matrixRGB;
 	}
@@ -114,17 +102,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixBGR() throws UnsupportedFormatException{
 		if (matrixBGR==null){	
-			Bitmap bitmap = read();
-			matrixBGR = new byte[bitmap.getWidth() * bitmap.getHeight() * 3];
-			int color;
-			for(int y = 0,line = 0 ;y < bitmap.getHeight();++y,line += bitmap.getWidth()*3){				
-				for(int x = 0, offset = 0; x < bitmap.getWidth() ; ++x, offset += 3){
-					color = bitmap.getPixel(x, y);
-					matrixBGR[line + offset      ] = (byte) Color.blue(color);
-					matrixBGR[line + offset + 1] = (byte) Color.green(color);
-					matrixBGR[line + offset + 2] = (byte) Color.red(color);
-				}
-			}
+			matrixBGR=ImageUtil.getMatrixBGR(read());
 		}
 		return matrixBGR;
 	}
@@ -137,18 +115,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixGray() throws UnsupportedFormatException{		
 		if(null==matrixGray){
-			Bitmap img = read();
-			matrixGray = new byte[img.getWidth() * img.getHeight() ];
-			int color,R,G,B;
-			for(int y = 0 ,line = 0;y < img.getHeight();++y,line += img.getWidth()){
-				for(int x = 0; x < img.getWidth() ; ++x){
-					color = img.getPixel(x, y);
-					R = Color.red(color);
-					G = Color.green(color);
-					B = Color.blue(color);		
-					matrixGray[line +x ] = (byte) ((R*76 + G*150 + B*30) >> 8);
-				}
-			}
+			ImageUtil.getMatrixGRAY(read());
 		}
 		return matrixGray;
 

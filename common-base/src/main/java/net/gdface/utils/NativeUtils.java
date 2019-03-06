@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 
 /**
  * 从jar包中加载指定路径下的动态库<br>
@@ -138,7 +139,16 @@ public class NativeUtils {
     	String prefix = Platform.getNativeLibraryResourcePrefix();
     	loadLibraryFromJar("/lib/" + prefix +"/" + System.mapLibraryName(name));
     }
-
+    /**
+     * 将动态库解析为内部资源路径
+     * @param name
+     * @return
+     * @throws IOException
+     */
+    private static String resolveName(String name) throws IOException {
+    	String prefix = Platform.getNativeLibraryResourcePrefix();
+    	return "/lib/" + prefix +"/" + System.mapLibraryName(name);
+    }
 	public static File getTemporaryDir() {
 		return temporaryDir;
 	}
@@ -171,4 +181,30 @@ public class NativeUtils {
         }
         return nread;
     }
+	/**
+	 * 从资源中加载动态库
+	 * @param name 动态库名,参见 {@link System#loadLibrary(String)}
+	 * @param loaderClass 
+	 * @throws IOException
+	 */
+	public static void loadLibraryFromResource(String name, Class<?> loaderClass) throws IOException{
+		if(Platform.isAndroid()){
+			System.loadLibrary(name);
+			return;
+		}
+		if(null == loaderClass){
+			loaderClass = NativeUtils.class;
+		}
+		URL url = loaderClass.getResource(resolveName(name));
+		Assert.notNull(url, "url","not found library");
+		if(url.getProtocol().equals("file")){
+			System.load(url.getPath());
+			return ;
+		}
+		if(url.getProtocol().equals("jar")){
+			loadFromJar(name);
+			return;
+		}
+		throw new UnsupportedOperationException();
+	}
 }
