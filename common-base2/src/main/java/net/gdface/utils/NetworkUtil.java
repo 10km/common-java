@@ -34,7 +34,7 @@ public class NetworkUtil {
         /** 二进制 */BIN(2),
         /** 十进制 */DEC(10),
         /** 十六进制 */HEX(16);
-        final int value;
+        public final int value;
         Radix(int radix){
             this.value = radix;
         }
@@ -120,10 +120,7 @@ public class NetworkUtil {
         List<String> hex = Lists.transform(Bytes.asList(source),new Function<Byte,String>(){
             @Override
             public String apply(Byte input) {
-                return String.copyValueOf(new char[]{
-                        Character.forDigit((input & 240) >> 4, radix.value),
-                        Character.forDigit(input & 15, radix.value)
-                });
+            	return Integer.toString(input & 0xff, radix.value);
             }});
         return Joiner.on(separator).join(hex);
     }
