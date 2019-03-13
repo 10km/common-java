@@ -1,6 +1,8 @@
 package net.gdface.utils;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
@@ -250,4 +252,24 @@ public class NetworkUtil {
             return false;
         }
     }        
+	/**
+	 * 获取访问指定host的当前网卡物理地址
+	 * @param host
+	 * @param port
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] getCurrentMac(String host,int port) throws IOException {
+		Socket socket = null;
+		try {
+			socket = new Socket(host,port);
+			InetAddress address = socket.getLocalAddress();
+			NetworkInterface nic = NetworkInterface.getByInetAddress(address);
+			return nic.getHardwareAddress();
+		} finally{
+			if(socket != null){
+				socket.close();
+			}
+		}
+	}
 }
