@@ -299,11 +299,17 @@ public class ClientFactory {
 
 		@Override
 		public boolean validateObject(PooledObject<T> p) {
-			return getChannel(p).getNettyChannel().isOpen();
+			return getChannel(p).getNettyChannel().isConnected();
 		}
 
 		@Override
 		public void activateObject(PooledObject<T> p) throws Exception {
+			// socket连接长时间空闲会被自动关闭,
+			// 为确保borrowObject方法返回的实例有效,在这里要检查对象是否被关闭
+			// 否则返回的对象可能因为长时间空闲连接被关闭而在使用时导致连接关闭异常
+			if(!validateObject(p)){
+				throw new IllegalStateException();
+			}
 		}
 
 		@Override
