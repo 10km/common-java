@@ -23,6 +23,10 @@ public class TimeCostProbe{
 	 */
 	private String location=null ;
 	/**
+	 * 默认输入的时间单位
+	 */
+	private TimeUnit outTimeUnit = TimeUnit.SECONDS;
+	/**
 	 * 获取当前方法名
 	 * @return
 	 */
@@ -49,8 +53,11 @@ public class TimeCostProbe{
 		if(!getMethodName().equals(location))
 			throw new IllegalArgumentException("begin/end must be call in same method");
 		timeCostMills.set(System.currentTimeMillis()-timeCostMills.get());
-		count.set(1);
-		return this;}		
+		if(count.get() ==0){
+			count.set(1);
+		}
+		return this;
+	}		
 	/**
 	 * 计时结果相加
 	 * @param mills
@@ -58,6 +65,10 @@ public class TimeCostProbe{
 	 */
 	public TimeCostProbe add(long mills){			
 		timeCostMills.addAndGet(mills);
+		count.incrementAndGet();
+		return this;
+	}
+	public TimeCostProbe addCount(){			
 		count.incrementAndGet();
 		return this;
 	}
@@ -80,11 +91,37 @@ public class TimeCostProbe{
 	 * @return
 	 */
 	public String log(String name){
+		return log(name,outTimeUnit);
+	}
+	/**
+	 * 以unit为时间单位输出统计信息
+	 * @param name
+	 * @param unit
+	 * @return
+	 */
+	public String log(String name,TimeUnit unit){
 		if(0==count.get())
 			throw new IllegalArgumentException("begin/end not match");
-		return String.format("%s: average cost:%f seconds(sample count %d)\n",name,timeCostMills.get()/1000d/count.get(),count.get());
+		return String.format("%s: average cost:%f %s(sample count %d)\n",name,
+				unit.convert(timeCostMills.get(), TimeUnit.MILLISECONDS)/(double)count.get(),
+				unit.name().toLowerCase(),
+				count.get());
 	}
 	public String log(){
 		return log(location);
+	}
+	public TimeUnit getOutTimeUnit() {
+		return outTimeUnit;
+	}
+	/**
+	 * 设置输出时间单位
+	 * @param outTimeUnit
+	 * @return
+	 */
+	public TimeCostProbe setOutTimeUnit(TimeUnit outTimeUnit) {
+		if(null != outTimeUnit){
+			this.outTimeUnit = outTimeUnit;
+		}
+		return this;
 	}
 }
