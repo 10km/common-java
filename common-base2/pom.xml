@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.gitee.l0km</groupId>
     <artifactId>common</artifactId>
-    <version>1.1.10</version>
+    <version>1.1.11-SNAPSHOT</version>
   </parent>
   <artifactId>common-base2</artifactId>
   <name>common-base2</name>
