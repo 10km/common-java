@@ -66,7 +66,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	 * @throws UnsupportedFormatException
 	 * @see ImageReadParam
 	 */
-	protected Bitmap read() throws UnsupportedFormatException {
+	public Bitmap read() throws UnsupportedFormatException {
 		try {
 			if(null == this.bitmap){
 				byte[] data = getBytes();

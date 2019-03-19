@@ -108,7 +108,9 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 				}
 		}
 	}
-
+	public BufferedImage read() throws UnsupportedFormatException{
+		return read(null);
+	}
 	/**
 	 * 对图像数据指定的区域解码
 	 * 
@@ -142,7 +144,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixRGBA() throws UnsupportedFormatException{
 		if (matrixRGBA==null){
-			matrixRGBA=ImageUtil.getMatrixRGBA(read(null));
+			matrixRGBA=ImageUtil.getMatrixRGBA(read());
 		}
 		return matrixRGBA;
 	}
@@ -150,7 +152,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
-			matrixRGB=ImageUtil.getMatrixRGB(read(null));
+			matrixRGB=ImageUtil.getMatrixRGB(read());
 		}
 		return matrixRGB;
 	}
@@ -158,7 +160,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixBGR() throws UnsupportedFormatException{
 		if (matrixBGR==null){	
-			matrixBGR=ImageUtil.getMatrixBGR(read(null));
+			matrixBGR=ImageUtil.getMatrixBGR(read());
 		}
 		return matrixBGR;
 	}
@@ -171,7 +173,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] getMatrixGray() throws UnsupportedFormatException{		
 		if(null==matrixGray){
-			matrixGray = ImageUtil.getMatrixGRAY(read(null));
+			matrixGray = ImageUtil.getMatrixGRAY(read());
 		}
 		return matrixGray;
 
