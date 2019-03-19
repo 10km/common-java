@@ -140,6 +140,14 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		return read(param);
 	}
 	@Override
+	public byte[] getMatrixRGBA() throws UnsupportedFormatException{
+		if (matrixRGBA==null){
+			matrixRGBA=ImageUtil.getMatrixRGBA(read(null));
+		}
+		return matrixRGBA;
+	}
+
+	@Override
 	public byte[] getMatrixRGB() throws UnsupportedFormatException{
 		if (matrixRGB==null){
 			matrixRGB=ImageUtil.getMatrixRGB(read(null));

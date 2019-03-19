@@ -64,6 +64,10 @@ public abstract class BaseLazyImage implements ImageMatrix {
 	 * 灰度图像矩阵数据(全图)
 	 */
 	protected byte[] matrixGray = null;
+	/**
+	 * RGBA格式的图像矩阵数据(全图)
+	 */
+	protected byte[] matrixRGBA = null;
 
 	protected BaseLazyImage() {
 	}
@@ -186,6 +190,9 @@ public abstract class BaseLazyImage implements ImageMatrix {
 		File file = new File(folder,getMd5()+(Judge.isEmpty(this.suffix)?"":"."+this.suffix));
 		localFile= FaceUtilits.saveBytes(getImgBytes(), file, file.exists()&&file.isFile()&&0==file.length());		
 		return localFile;
+	}
+	public byte[] getMatrixRGBA() throws UnsupportedFormatException {
+		return null;
 	}
 	/**
 	 * 返回当前 {@link LazyImageFactory}实例

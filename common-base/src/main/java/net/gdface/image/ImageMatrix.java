@@ -32,5 +32,11 @@ public interface ImageMatrix {
 	 * @throws UnsupportedFormatException
 	 */
 	byte[] getMatrixRGB() throws UnsupportedFormatException;
+	/**
+	 * 对图像解码返回RGBA格式矩阵数据
+	 * @return
+	 * @throws UnsupportedFormatException
+	 */
+	byte[] getMatrixRGBA() throws UnsupportedFormatException;
 
 }
