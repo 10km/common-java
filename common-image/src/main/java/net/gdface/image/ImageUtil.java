@@ -486,31 +486,49 @@ public class ImageUtil {
 		}
 	}
 	/**
-	 * 根据指定的参数创建一个RGB格式的BufferedImage
-	 * @param matrixRGB 图像矩阵数据,为null则创建一个指定尺寸的空图像
+	 * 从RGB格式图像矩阵数据创建一个BufferedImage
+	 * @param matrixRGB RGB格式图像矩阵数据,为null则创建一个指定尺寸的空图像
 	 * @param width
 	 * @param height
 	 * @return
 	 */
 	public static BufferedImage createRGBImage(byte[] matrixRGB,int width,int height){
-		Assert.isTrue(null==matrixRGB||(null!=matrixRGB&&matrixRGB.length==width*height*3),"invalid image description");
-	    DataBufferByte dataBuffer = null==matrixRGB?null:new DataBufferByte(matrixRGB, matrixRGB.length);
+		int bytePerPixel = 3;
+		Assert.isTrue(null==matrixRGB || matrixRGB.length==width*height*bytePerPixel,"invalid image argument");
+	    DataBufferByte dataBuffer = null==matrixRGB ? null : new DataBufferByte(matrixRGB, matrixRGB.length);
 	    ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-	    int[] nBits = {8, 8, 8};
-	    int[] bOffs = {2, 1, 0};
-	    ComponentColorModel colorModel = new ComponentColorModel(cs, nBits, false, false,
+	    int[] bOffs = {0, 1, 2};
+	    ComponentColorModel colorModel = new ComponentColorModel(cs, false, false,
 	                                         Transparency.OPAQUE,
 	                                         DataBuffer.TYPE_BYTE);		   
-	    WritableRaster raster = null!=dataBuffer
-	    		? Raster.createInterleavedRaster(dataBuffer, width, height, width*3, 3, bOffs, null)
-	    		: Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,width*3, 3, bOffs, null);;
-	    BufferedImage img = new BufferedImage(colorModel,raster,false,null);
-	    /*try {
-			ImageIO.write(img, "bmp", new File(System.getProperty("user.dir"),"test.bmp"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
+	    WritableRaster raster = null != dataBuffer
+	    		? Raster.createInterleavedRaster(dataBuffer, width, height, width*bytePerPixel, bytePerPixel, bOffs, null)
+	    		: Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,width*bytePerPixel, bytePerPixel, bOffs, null);
+	    BufferedImage img = new BufferedImage(colorModel,raster,colorModel.isAlphaPremultiplied(),null);
 	    return  img;	    
+	}
+	/**
+	 * 从RGBA格式图像矩阵数据创建一个BufferedImage<br>
+	 * 该方法删除了alpha通道
+	 * @param matrixRGBA RGBA格式图像矩阵数据,为null则创建一个指定尺寸的空图像
+	 * @param width
+	 * @param height
+	 * @return
+	 */
+	public static BufferedImage createRGBAImage(byte[] matrixRGBA,int width,int height){
+		int bytePerPixel = 4;
+		Assert.isTrue(null==matrixRGBA || matrixRGBA.length==width*height*bytePerPixel,"invalid image argument");
+	    DataBufferByte dataBuffer = null==matrixRGBA ? null : new DataBufferByte(matrixRGBA, matrixRGBA.length);
+	    ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+	    int[] bOffs = {0, 1, 2};
+	    ComponentColorModel colorModel = new ComponentColorModel(cs, false, false,
+	                                         Transparency.OPAQUE,
+	                                         DataBuffer.TYPE_BYTE);		   
+	    WritableRaster raster = null != dataBuffer
+	    		? Raster.createInterleavedRaster(dataBuffer, width, height, width*bytePerPixel, bytePerPixel, bOffs, null)
+	    		: Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height,width*bytePerPixel, bytePerPixel, bOffs, null);
+	    BufferedImage img = new BufferedImage(colorModel,raster,colorModel.isAlphaPremultiplied(),null);
+	    return  img;
 	}
 	private static void assertContains(final Rectangle parent, String argParent, final Rectangle sub, final String argSub)
 			throws IllegalArgumentException {
