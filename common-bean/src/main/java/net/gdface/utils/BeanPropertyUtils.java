@@ -37,9 +37,10 @@ public class BeanPropertyUtils {
 	 * 					<li>1 读属性</li>
 	 * 					<li>2 写属性</li>
 	 * 					<li>3 读写属性</li>
+	 * @param lenient 是否为宽容模式---允许返回类型不为void的setter方法
 	 * @return 属性名与PropertyDescriptor映射的Map对象
 	 */
-	public static final Map<String, PropertyDescriptor> getProperties(Class<?> beanClass, int rw) {
+	public static final Map<String, PropertyDescriptor> getProperties(Class<?> beanClass, int rw,boolean lenient) {
 		try {
 			Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
 			if (beanClass != null) {
@@ -48,6 +49,9 @@ public class BeanPropertyUtils {
 				PropertyDescriptor[] origDescriptors = propertyUtils.getPropertyDescriptors(beanClass);
 				Boolean put;
 				for (PropertyDescriptor pd : origDescriptors) {
+					if(lenient){
+						pd = LenientDecoratorOfDescriptor.toDecorator(pd);
+					}
 					put = false;
 					switch (rw &= 3) {
 					case 0:
@@ -72,6 +76,19 @@ public class BeanPropertyUtils {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+	/**
+	 * 获取beanClass中所有具有指定读写类型(rw)的属性
+	 * @param beanClass
+	 * @param rw 属性类型标记 <br>
+	 * 					<li>0 所有属性</li>
+	 * 					<li>1 读属性</li>
+	 * 					<li>2 写属性</li>
+	 * 					<li>3 读写属性</li>
+	 * @return 属性名与PropertyDescriptor映射的Map对象
+	 */
+	public static final Map<String, PropertyDescriptor> getProperties(Class<?> beanClass, int rw) {
+		return getProperties(beanClass, rw, false);
 	}
 	public static final <T>T copy(T from,T to){
 		if(null==from||null==to)
