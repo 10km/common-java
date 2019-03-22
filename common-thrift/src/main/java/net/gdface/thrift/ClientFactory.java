@@ -1,5 +1,7 @@
 package net.gdface.thrift;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -21,6 +23,7 @@ import com.facebook.nifty.client.NiftyClientConnector;
 import com.facebook.swift.service.ThriftClient;
 import com.facebook.swift.service.ThriftClientConfig;
 import com.facebook.swift.service.ThriftClientManager;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -70,6 +73,13 @@ public class ClientFactory {
     private String clientName = ThriftClientManager.DEFAULT_NAME;
     private GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
     private Executor executor = MoreExecutors.directExecutor();
+    /**
+     * 接口实例代理函数对象,
+     * 如果提供了该函数对象(不为null),则在创建接口实例时调用该函数，
+     * 将thrift/swift创建的接口实例转为代理实例,
+     * 参见{@link ClientInstanceFactory#makeObject()}
+     */
+    private Function<Object, Object> decorator = null;
     protected ClientFactory() {
     }
 
@@ -170,6 +180,11 @@ public class ClientFactory {
 		return executor;
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T> ClientFactory setDecorator(Function<T, T> decorator) {
+		this.decorator = (Function<Object, Object>) decorator;
+		return this;
+	}
 	private HostAndPort getHostAndPort(){
         return checkNotNull(this.hostAndPort,"hostAndPort is null");
     }
@@ -267,6 +282,13 @@ public class ClientFactory {
             throw new RuntimeException(e);
         }
     }
+    public static interface DelegateOfProxy<I> {
+    	/**
+    	 * 返回代理的接口实例
+    	 * @return
+    	 */
+    	I getDelegate();
+    }
     /**
      * 释放{@code instance}实例使用权,必须和{@link #applyInstance(Class)}配对使用
      * @param instance 接口实例
@@ -278,17 +300,38 @@ public class ClientFactory {
     }
     private class ClientInstanceFactory<T> implements PooledObjectFactory<T>{
     	private final Class<T> interfaceClass;
-
+    	private boolean checked = false;
 		private ClientInstanceFactory(Class<T> interfaceClass) {
 			checkArgument(null != interfaceClass && interfaceClass.isInterface());
 			this.interfaceClass = interfaceClass;
 		}
+		@SuppressWarnings("unchecked")
 		private NiftyClientChannel getChannel(PooledObject<T>p){
-	    	return (NiftyClientChannel) getClientManager().getRequestChannel(p.getObject());
+			T instance = p.getObject();
+			if(decorator !=null){
+				// 返回原始代理接口实例
+				instance = ((DelegateOfProxy<T>)Proxy.getInvocationHandler(instance)).getDelegate();
+				checkArgument(instance != null);
+			}
+	    	return (NiftyClientChannel) getClientManager().getRequestChannel(instance);
 		}
+		@SuppressWarnings("unchecked")
 		@Override
 		public PooledObject<T> makeObject() throws Exception {
 			T obj = getThriftClient(interfaceClass).open(getClientManager().createChannel(getConnector()).get());
+			if(decorator !=null){
+				obj = (T) decorator.apply(obj);
+				if(!checked){
+					// 检查代理实例有效性
+					checkArgument(obj !=null && Proxy.isProxyClass(obj.getClass()));
+					InvocationHandler handler = Proxy.getInvocationHandler(obj);
+					// handler必须实现 DelegateOfProxy接口
+					checkArgument(handler instanceof DelegateOfProxy,
+							"InvocationHandler of decorator must implemention interface 'DelegateOfProxy'");
+					checked = true;
+				}
+			
+			}
 			return new DefaultPooledObject<T>(obj);
 		}
 
