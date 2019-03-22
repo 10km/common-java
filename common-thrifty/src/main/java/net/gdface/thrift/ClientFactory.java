@@ -13,6 +13,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.FutureCallback;
@@ -45,6 +46,13 @@ public class ClientFactory {
     private long readTimeout;
     private long connectTimeout;
 	private Executor executor = MoreExecutors.directExecutor();
+    /**
+     * 接口实例代理函数对象,
+     * 如果提供了该函数对象(不为null),则在创建接口实例时调用该函数，
+     * 将thrift/swift创建的接口实例转为代理实例,
+     * 参见{@link ClientInstanceFactory#makeObject()}
+     */
+    private Function<Object, Object> decorator = null;
     protected ClientFactory() {
     }
 
@@ -95,6 +103,11 @@ public class ClientFactory {
 	public Executor getExecutor() {
 		return executor;
 	}
+	@SuppressWarnings("unchecked")
+	public <T> ClientFactory setDecorator(Function<T, T> decorator) {
+		this.decorator = (Function<Object, Object>) decorator;
+		return this;
+	}
     /**
      * @param stubClass
      * @param closeListener
@@ -123,16 +136,42 @@ public class ClientFactory {
     }
     /**
      * 构造{@code interfaceClass}实例
-     * @param destClass
-     * @return 返回 {@code destClass }实例
+     * @param interfaceClass
+     * @param thriftImplClass
+     * @param decoratorClass
+     * @return 返回 {@code decoratorClass }实例
      */
-    public<O> O  build(final Class<O> destClass){
+    @SuppressWarnings("unchecked")
+	public<I,O extends I,T extends I> O  build(Class<I> interfaceClass, Class<T> thriftImplClass,Class<O> decoratorClass){
         try {
-            return destClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this);
+			I instance = (I) thriftImplClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this);
+        	if(decorator !=null){
+        		instance = (I) decorator.apply(instance);
+        	}
+            return decoratorClass.getDeclaredConstructor(interfaceClass).newInstance(instance);
         } catch (Exception e) {
         	Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
         }
+    }
+	/**
+	 * 构造{@code interfaceClass}实例<br>
+	 * {@link #build(Class, Class, Class)}的简化版本，当thriftImplClass只实现了一个接口时，自动推断接口类型
+	 * @param thriftImplClass
+	 * @param destClass
+	 * @return
+	 * @see #build(Class, Class, Class)
+	 */
+	@SuppressWarnings("unchecked")
+	public<I,O extends I,T extends I> O  build(Class<T> thriftImplClass,Class<O> destClass){
+		checkArgument(thriftImplClass.getInterfaces().length ==1,
+				"can't determines interface class from %s",thriftImplClass.getName());
+		Class<I> interfaceClass =  (Class<I>) thriftImplClass.getInterfaces()[0];
+		checkArgument(interfaceClass.isAssignableFrom(destClass),
+				"the %s not implemention interface %s",destClass.getName(),interfaceClass.getName());
+		
+		return build(interfaceClass,thriftImplClass,destClass);
+
     }
     public <V> void addCallback(
             final ListenableFuture<V> future,
@@ -187,5 +226,12 @@ public class ClientFactory {
         public void addListener(Runnable listener, Executor executor) {
             future.addListener(listener, executor);            
         }        
+    }
+    public static interface DelegateOfProxy<I> {
+    	/**
+    	 * 返回代理的接口实例
+    	 * @return
+    	 */
+    	I getDelegate();
     }
 }
