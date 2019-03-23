@@ -135,20 +135,30 @@ public class ClientFactory {
         return new ClientFactory();
     }
     /**
-     * 构造{@code interfaceClass}实例
+     * 构造{@code interfaceClass}实例<br>
+     * thriftyImplClass或interfaceClass为null时,假设destClass为thrifty 异步实例类型
+     * @param <I> 接口类
+     * @param <O> 返回实例类型
+     * @param <T> 基于thrifty实现接口类的实例类型
      * @param interfaceClass
-     * @param thriftImplClass
-     * @param decoratorClass
+     * @param thriftyImplClass
+     * @param destClass 返回的实例类型，如果interfaceClass和thriftyImplClass为null,必须有参数为{@link ClientFactory}的构造函数
+     * 否则必须有参数类型为interfaceClass的构造函数
      * @return 返回 {@code decoratorClass }实例
      */
     @SuppressWarnings("unchecked")
-	public<I,O extends I,T extends I> O  build(Class<I> interfaceClass, Class<T> thriftImplClass,Class<O> decoratorClass){
+	public<I,O extends I,T extends I> O  build(Class<I> interfaceClass, Class<T> thriftyImplClass,Class<O> destClass){
         try {
-			I instance = (I) thriftImplClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this);
+        	checkNotNull(destClass,"destClass is null");
+        	if(interfaceClass == null || thriftyImplClass == null){
+        		// destClass 为异步模式实例
+                return destClass.getDeclaredConstructor(ClientFactory.class).newInstance(this); 
+        	}
+			I instance = (I) thriftyImplClass.getDeclaredConstructor(ClientFactory.class).newInstance(this);
         	if(decorator !=null){
         		instance = (I) decorator.apply(instance);
         	}
-            return decoratorClass.getDeclaredConstructor(interfaceClass).newInstance(instance);
+            return destClass.getDeclaredConstructor(interfaceClass).newInstance(instance);
         } catch (Exception e) {
         	Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
@@ -157,21 +167,29 @@ public class ClientFactory {
 	/**
 	 * 构造{@code interfaceClass}实例<br>
 	 * {@link #build(Class, Class, Class)}的简化版本，当thriftImplClass只实现了一个接口时，自动推断接口类型
-	 * @param thriftImplClass
+	 * @param thriftyImplClass
 	 * @param destClass
 	 * @return
 	 * @see #build(Class, Class, Class)
 	 */
 	@SuppressWarnings("unchecked")
-	public<I,O extends I,T extends I> O  build(Class<T> thriftImplClass,Class<O> destClass){
-		checkArgument(thriftImplClass.getInterfaces().length ==1,
-				"can't determines interface class from %s",thriftImplClass.getName());
-		Class<I> interfaceClass =  (Class<I>) thriftImplClass.getInterfaces()[0];
+	public<I,O extends I,T extends I> O  build(Class<T> thriftyImplClass,Class<O> destClass){
+		checkArgument(thriftyImplClass != null);
+		checkArgument(thriftyImplClass.getInterfaces().length ==1,
+				"can't determines interface class from %s",thriftyImplClass.getName());
+		Class<I> interfaceClass = (Class<I>) thriftyImplClass.getInterfaces()[0];
 		checkArgument(interfaceClass.isAssignableFrom(destClass),
 				"the %s not implemention interface %s",destClass.getName(),interfaceClass.getName());
-		
-		return build(interfaceClass,thriftImplClass,destClass);
-
+		return build(interfaceClass,thriftyImplClass,destClass);
+    }
+	/**
+	 * 创建异步实例 
+	 * @param destClass 返回的实例类型，必须有参数为{@link ClientFactory}的构造函数
+	 * @return
+	 * @see #build(Class, Class, Class)
+	 */
+	public<I,O extends I,T extends I> O  buildAsync(Class<O> destClass){
+		return build(null,null,destClass);
     }
     public <V> void addCallback(
             final ListenableFuture<V> future,
