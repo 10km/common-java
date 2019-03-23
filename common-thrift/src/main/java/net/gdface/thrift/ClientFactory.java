@@ -1,7 +1,5 @@
 package net.gdface.thrift;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -77,7 +75,6 @@ public class ClientFactory {
      * 接口实例代理函数对象,
      * 如果提供了该函数对象(不为null),则在创建接口实例时调用该函数，
      * 将thrift/swift创建的接口实例转为代理实例,
-     * 参见{@link ClientInstanceFactory#makeObject()}
      */
     private Function<Object, Object> decorator = null;
     protected ClientFactory() {
@@ -282,13 +279,6 @@ public class ClientFactory {
             throw new RuntimeException(e);
         }
     }
-    public static interface DelegateOfProxy<I> {
-    	/**
-    	 * 返回代理的接口实例
-    	 * @return
-    	 */
-    	I getDelegate();
-    }
     /**
      * 释放{@code instance}实例使用权,必须和{@link #applyInstance(Class)}配对使用
      * @param instance 接口实例
@@ -300,38 +290,17 @@ public class ClientFactory {
     }
     private class ClientInstanceFactory<T> implements PooledObjectFactory<T>{
     	private final Class<T> interfaceClass;
-    	private boolean checked = false;
+
 		private ClientInstanceFactory(Class<T> interfaceClass) {
 			checkArgument(null != interfaceClass && interfaceClass.isInterface());
 			this.interfaceClass = interfaceClass;
 		}
-		@SuppressWarnings("unchecked")
 		private NiftyClientChannel getChannel(PooledObject<T>p){
-			T instance = p.getObject();
-			if(decorator !=null){
-				// 返回原始代理接口实例
-				instance = ((DelegateOfProxy<T>)Proxy.getInvocationHandler(instance)).getDelegate();
-				checkArgument(instance != null);
-			}
-	    	return (NiftyClientChannel) getClientManager().getRequestChannel(instance);
+	    	return (NiftyClientChannel) getClientManager().getRequestChannel(p.getObject());
 		}
-		@SuppressWarnings("unchecked")
 		@Override
 		public PooledObject<T> makeObject() throws Exception {
 			T obj = getThriftClient(interfaceClass).open(getClientManager().createChannel(getConnector()).get());
-			if(decorator !=null){
-				obj = (T) decorator.apply(obj);
-				if(!checked){
-					// 检查代理实例有效性
-					checkArgument(obj !=null && Proxy.isProxyClass(obj.getClass()));
-					InvocationHandler handler = Proxy.getInvocationHandler(obj);
-					// handler必须实现 DelegateOfProxy接口
-					checkArgument(handler instanceof DelegateOfProxy,
-							"InvocationHandler of decorator must implemention interface 'DelegateOfProxy'");
-					checked = true;
-				}
-			
-			}
 			return new DefaultPooledObject<T>(obj);
 		}
 
@@ -364,22 +333,53 @@ public class ClientFactory {
 		return new ClientFactory();
 	}
     /**
-     * 构造{@code interfaceClass}实例
+     * 构造{@code interfaceClass}实例<br>
+     * thriftyImplClass为null时,假设destClass为thrifty 异步实例类型
+     * @param <I> 接口类
+     * @param <O> 返回实例类型
+     * @param <T> 基于thrifty实现接口类的实例类型
      * @param interfaceClass
-     * @param destClass
+     * @param thriftyImplClass
+     * @param destClass 返回的实例类型，如果interfaceClass和thriftyImplClass为null,必须有参数为{@link ClientFactory}的构造函数
+     * 否则必须有参数类型为interfaceClass的构造函数
      * @return 返回 {@code destClass }实例
      */
     @SuppressWarnings("unchecked")
-    public<I,O> O  build(Class<I> interfaceClass,final Class<O> destClass){
+    public<I,T extends I,O> O  build(final Class<I> interfaceClass,final Class<T> thriftyImplClass,final Class<O> destClass){
         try {
             return (O) CLIENT_CACHE.get(interfaceClass, new Callable<Object>(){
                 @Override
                 public Object call() throws Exception {
-                    return destClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this);
+                	if(thriftyImplClass == null){
+                		// destClass 为异步模式实例
+                        return destClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this); 
+                	}
+        			T instance =thriftyImplClass.getDeclaredConstructor(ClientFactory.class).newInstance(ClientFactory.this);
+                	if(decorator !=null){
+                		instance = (T) decorator.apply(instance);
+                	}
+                    return destClass.getDeclaredConstructor(interfaceClass).newInstance(instance);
                 }});
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        } catch (ExecutionException e) {
+        	Throwables.throwIfUnchecked(e.getCause());
+            throw new RuntimeException(e.getCause());
+		}
+    }
+	/**
+	 * 构造{@code interfaceClass}实例<br>
+	 * {@link #build(Class, Class, Class)}的简化版本，当thriftImplClass只实现了一个接口时，自动推断接口类型
+	 * @param thriftyImplClass
+	 * @param destClass
+	 * @return
+	 * @see #build(Class, Class, Class)
+	 */
+	@SuppressWarnings("unchecked")
+	public<I,O,T extends I> O  build(Class<T> thriftyImplClass,Class<O> destClass){
+		checkArgument(thriftyImplClass != null);
+		checkArgument(thriftyImplClass.getInterfaces().length ==1,
+				"can't determines interface class from %s",thriftyImplClass.getName());
+		Class<I> interfaceClass = (Class<I>) thriftyImplClass.getInterfaces()[0];
+		return build(interfaceClass,thriftyImplClass,destClass);
     }
     public <V> void addCallback(
             final ListenableFuture<V> future,

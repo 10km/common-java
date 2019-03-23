@@ -50,7 +50,6 @@ public class ClientFactory {
      * 接口实例代理函数对象,
      * 如果提供了该函数对象(不为null),则在创建接口实例时调用该函数，
      * 将thrift/swift创建的接口实例转为代理实例,
-     * 参见{@link ClientInstanceFactory#makeObject()}
      */
     private Function<Object, Object> decorator = null;
     protected ClientFactory() {
@@ -144,19 +143,19 @@ public class ClientFactory {
      * @param thriftyImplClass
      * @param destClass 返回的实例类型，如果interfaceClass和thriftyImplClass为null,必须有参数为{@link ClientFactory}的构造函数
      * 否则必须有参数类型为interfaceClass的构造函数
-     * @return 返回 {@code decoratorClass }实例
+     * @return 返回 {@code destClass }实例
      */
     @SuppressWarnings("unchecked")
-	public<I,O extends I,T extends I> O  build(Class<I> interfaceClass, Class<T> thriftyImplClass,Class<O> destClass){
+	public<I,T extends I,O> O  build(Class<I> interfaceClass, Class<T> thriftyImplClass,Class<O> destClass){
         try {
         	checkNotNull(destClass,"destClass is null");
         	if(interfaceClass == null || thriftyImplClass == null){
         		// destClass 为异步模式实例
                 return destClass.getDeclaredConstructor(ClientFactory.class).newInstance(this); 
         	}
-			I instance = (I) thriftyImplClass.getDeclaredConstructor(ClientFactory.class).newInstance(this);
+			T instance =thriftyImplClass.getDeclaredConstructor(ClientFactory.class).newInstance(this);
         	if(decorator !=null){
-        		instance = (I) decorator.apply(instance);
+        		instance = (T) decorator.apply(instance);
         	}
             return destClass.getDeclaredConstructor(interfaceClass).newInstance(instance);
         } catch (Exception e) {
@@ -167,19 +166,20 @@ public class ClientFactory {
 	/**
 	 * 构造{@code interfaceClass}实例<br>
 	 * {@link #build(Class, Class, Class)}的简化版本，当thriftImplClass只实现了一个接口时，自动推断接口类型
+	 * <b>NOTE</b>从1.1.17版本以后，该方法第一个参数为thrift实现的服务接口的类，不再是服务接口类
 	 * @param thriftyImplClass
 	 * @param destClass
 	 * @return
 	 * @see #build(Class, Class, Class)
 	 */
 	@SuppressWarnings("unchecked")
-	public<I,O extends I,T extends I> O  build(Class<T> thriftyImplClass,Class<O> destClass){
+	public<I,O,T extends I> O  build(Class<T> thriftyImplClass,Class<O> destClass){
 		checkArgument(thriftyImplClass != null);
+		checkArgument(!thriftyImplClass.isInterface(),
+				"%s must not be a interface,must a class implemented service interface",thriftyImplClass.getName());
 		checkArgument(thriftyImplClass.getInterfaces().length ==1,
 				"can't determines interface class from %s",thriftyImplClass.getName());
 		Class<I> interfaceClass = (Class<I>) thriftyImplClass.getInterfaces()[0];
-		checkArgument(interfaceClass.isAssignableFrom(destClass),
-				"the %s not implemention interface %s",destClass.getName(),interfaceClass.getName());
 		return build(interfaceClass,thriftyImplClass,destClass);
     }
 	/**
@@ -188,7 +188,7 @@ public class ClientFactory {
 	 * @return
 	 * @see #build(Class, Class, Class)
 	 */
-	public<I,O extends I,T extends I> O  buildAsync(Class<O> destClass){
+	public<O> O  buildAsync(Class<O> destClass){
 		return build(null,null,destClass);
     }
     public <V> void addCallback(
@@ -244,12 +244,5 @@ public class ClientFactory {
         public void addListener(Runnable listener, Executor executor) {
             future.addListener(listener, executor);            
         }        
-    }
-    public static interface DelegateOfProxy<I> {
-    	/**
-    	 * 返回代理的接口实例
-    	 * @return
-    	 */
-    	I getDelegate();
     }
 }
