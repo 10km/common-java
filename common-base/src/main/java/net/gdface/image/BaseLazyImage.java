@@ -202,10 +202,6 @@ public abstract class BaseLazyImage implements ImageMatrix {
 		Assert.notNull(out, "out");
 		out.write(wirteJPEGBytes());
 	}
-
-	public byte[] getMatrixRGBA() throws UnsupportedFormatException {
-		return null;
-	}
 	/**
 	 * 返回当前 {@link LazyImageFactory}实例
 	 * @return
