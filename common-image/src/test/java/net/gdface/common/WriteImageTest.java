@@ -3,7 +3,6 @@ package net.gdface.common;
 import static org.junit.Assert.*;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
