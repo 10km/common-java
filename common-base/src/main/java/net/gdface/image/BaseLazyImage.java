@@ -3,6 +3,7 @@ package net.gdface.image;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -191,6 +192,17 @@ public abstract class BaseLazyImage implements ImageMatrix {
 		localFile= FaceUtilits.saveBytes(getImgBytes(), file, file.exists()&&file.isFile()&&0==file.length());		
 		return localFile;
 	}
+	public abstract byte[] wirtePNGBytes();
+	public abstract byte[] wirteJPEGBytes();
+	public void wirtePNGB(OutputStream out) throws IOException{
+		Assert.notNull(out, "out");
+		out.write(wirtePNGBytes());
+	}
+	public void wirteJPEG(OutputStream out) throws IOException{
+		Assert.notNull(out, "out");
+		out.write(wirteJPEGBytes());
+	}
+
 	public byte[] getMatrixRGBA() throws UnsupportedFormatException {
 		return null;
 	}

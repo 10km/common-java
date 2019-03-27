@@ -178,7 +178,32 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		return matrixGray;
 
 	}
-
+	@Override
+	public byte[] wirtePNGBytes(){
+		try {
+			if("PNG".equals(getSuffix().toUpperCase())){
+				if(getImgBytes() != null){
+					return getImgBytes();
+				}
+			}
+			return ImageUtil.wirtePNGBytes(read());
+		} catch (UnsupportedFormatException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	@Override
+	public byte[] wirteJPEGBytes(){
+		try {
+			if("JPEG".equals(getSuffix().toUpperCase())){
+				if(getImgBytes() != null){
+					return getImgBytes();
+				}
+			}
+			return ImageUtil.wirteJPEGBytes(read(),0.9f);
+		} catch (UnsupportedFormatException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	/**
 	 * 创建并打开对象
 	 * @param imgBytes

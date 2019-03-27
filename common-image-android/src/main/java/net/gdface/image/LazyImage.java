@@ -30,7 +30,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 				BitmapFactory.Options options = new BitmapFactory.Options();
 				// 只获取宽高基本信息，不对图像解码
 				options.inJustDecodeBounds = true;
-				byte[] data = getBytes();
+				byte[] data = getImgBytes();
 				BitmapFactory.decodeByteArray(data,0,data.length, options);
 				this.width = options.outWidth;
 				this.height = options.outHeight;
@@ -69,7 +69,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	public Bitmap read() throws UnsupportedFormatException {
 		try {
 			if(null == this.bitmap){
-				byte[] data = getBytes();
+				byte[] data = getImgBytes();
 				// 对图像数据解码，解码失败抛出异常
 				this.bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
 				if(null == bitmap){
@@ -127,7 +127,32 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 		return matrixGray;
 
 	}
-
+	@Override
+	public byte[] wirtePNGBytes(){
+		try {
+			if("PNG".equals(getSuffix().toUpperCase())){
+				if(getImgBytes() != null){
+					return getImgBytes();
+				}
+			}
+			return ImageUtil.wirtePNGBytes(read());
+		} catch (UnsupportedFormatException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	@Override
+	public byte[] wirteJPEGBytes(){
+		try {
+			if("JPEG".equals(getSuffix().toUpperCase())){
+				if(getImgBytes() != null){
+					return getImgBytes();
+				}
+			}
+			return ImageUtil.wirteJPEGBytes(read(),0.9f);
+		} catch (UnsupportedFormatException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	/**
 	 * 创建并打开对象
 	 * @param imgBytes
@@ -226,25 +251,6 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	 */
 	public <T>LazyImage(T src) throws IOException {
 		this(FaceUtilits.getBytesNotEmpty(src));		
-	}
-
-	/**
-	 * 返回图像字节数组<br>
-	 * 如果 {@link #imgBytes} 为{@code null},则根据 {@link #localFile}创建
-	 * @return 
-	 */
-	private byte[] getBytes() {
-		if (null == imgBytes) {
-			if (null == localFile)
-				throw new IllegalArgumentException(
-						"while isValidImage be true localFile & imgBytes can't be NULL all");
-			try {
-				this.imgBytes = FaceUtilits.getBytesNotEmpty(localFile);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return imgBytes;
 	}
 
 	@Override

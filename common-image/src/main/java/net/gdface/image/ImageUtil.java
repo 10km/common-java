@@ -82,13 +82,13 @@ public class ImageUtil {
 	public static byte[] wirteJPEGBytes(BufferedImage source){
 		return wirteJPEGBytes(source,null);
 	}
-	public static byte[] wirteBMPytes(BufferedImage source){
+	public static byte[] wirteBMPBytes(BufferedImage source){
 		return wirteBytes(source,"BMP");
 	}
-	public static byte[] wirtePNGytes(BufferedImage source){
+	public static byte[] wirtePNGBytes(BufferedImage source){
 		return wirteBytes(source,"PNG");
 	}
-	public static byte[] wirteGIFytes(BufferedImage source){
+	public static byte[] wirteGIFBytes(BufferedImage source){
 		return wirteBytes(source,"GIF");
 	}
 	/**
@@ -106,13 +106,32 @@ public class ImageUtil {
 	/**
 	 * 将{@link BufferedImage}生成formatName指定格式的图像数据
 	 * @param source
-	 * @param formatName 图像格式名，图像格式名错误则抛出异常
+	 * @param formatName 图像格式名，图像格式名错误则抛出异常,可用的值 'BMP','PNG','GIF','JPEG'
+	 * @param compressionQuality 压缩质量(0.0~1.0),超过此范围抛出异常,为null使用默认值
 	 * @return
 	 */
 	public static byte[] wirteBytes(BufferedImage source,String formatName,Float compressionQuality){
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		try {
+			wirte(source, formatName, compressionQuality, output);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return output.toByteArray();		
+	}
+	/**
+	 * 将{@link BufferedImage}生成formatName指定格式的图像数据
+	 * @param source
+	 * @param formatName 图像格式名，图像格式名错误则抛出异常,可用的值 'BMP','PNG','GIF','JPEG'
+	 * @param compressionQuality 压缩质量(0.0~1.0),超过此范围抛出异常,为null使用默认值
+	 * @param output 输出流
+	 * @throws IOException 
+	 */
+	public static void wirte(BufferedImage source,String formatName,Float compressionQuality,OutputStream output) throws IOException{
 		Assert.notNull(source, "source");
 		Assert.notEmpty(formatName, "formatName");
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		Assert.notNull(output, "output");
+
 		Graphics2D g = null;
 		try {
 			// 对于某些格式的图像(如png)，直接调用ImageIO.write生成jpeg可能会失败
@@ -126,14 +145,11 @@ public class ImageUtil {
 				g = s.createGraphics();
 				g.drawImage(source, 0, 0,null);				
 			}				
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		} finally {
 			if (null != g){
 				g.dispose();
 			}
 		}
-		return output.toByteArray();		
 	}
 	/**
 	 * 对原图创建缩略图对象<br>
