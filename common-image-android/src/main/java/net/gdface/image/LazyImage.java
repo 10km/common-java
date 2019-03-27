@@ -130,7 +130,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] wirtePNGBytes(){
 		try {
-			if("PNG".equals(getSuffix().toUpperCase())){
+			if("PNG".equalsIgnoreCase(getSuffix())){
 				if(getImgBytes() != null){
 					return getImgBytes();
 				}
@@ -143,7 +143,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	@Override
 	public byte[] wirteJPEGBytes(){
 		try {
-			if("JPEG".equals(getSuffix().toUpperCase())){
+			if("JPEG".equalsIgnoreCase(getSuffix())){
 				if(getImgBytes() != null){
 					return getImgBytes();
 				}

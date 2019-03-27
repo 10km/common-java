@@ -26,11 +26,11 @@ public class WriteImageTest {
 			BufferedImage bufferedImage = ImageIO.read(im);
 			byte[] imageBytes = ImageUtil.wirteJPEGBytes(bufferedImage, 0.9F);
 			logger.info(String.format("imageBytes = %d", imageBytes.length));
-			byte[] bmpBytes = ImageUtil.wirteBMPytes(bufferedImage);
+			byte[] bmpBytes = ImageUtil.wirteBMPBytes(bufferedImage);
 			logger.info(String.format("bmpBytes = %d", bmpBytes.length));
-			byte[] pngBytes = ImageUtil.wirtePNGytes(bufferedImage);
+			byte[] pngBytes = ImageUtil.wirtePNGBytes(bufferedImage);
 			logger.info(String.format("pngBytes = %d", pngBytes.length));
-			byte[] gifBytes = ImageUtil.wirteGIFytes(bufferedImage);
+			byte[] gifBytes = ImageUtil.wirteGIFBytes(bufferedImage);
 			logger.info(String.format("gifBytes = %d", gifBytes.length));
 		} catch (Exception e) {
 			e.printStackTrace();
