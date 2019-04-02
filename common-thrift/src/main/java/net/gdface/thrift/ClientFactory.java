@@ -383,7 +383,7 @@ public class ClientFactory {
     }
 	
 	/**
-	 * 测试指定连接是否有效
+	 * 测试当前连接是否有效
 	 * @return 连接有效返回{@code true},否则返回{@code false}
 	 */
 	public boolean testConnect(){
