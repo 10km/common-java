@@ -381,6 +381,20 @@ public class ClientFactory {
 		Class<I> interfaceClass = (Class<I>) thriftyImplClass.getInterfaces()[0];
 		return build(interfaceClass,thriftyImplClass,destClass);
     }
+	
+	/**
+	 * 测试指定连接是否有效
+	 * @return 连接有效返回{@code true},否则返回{@code false}
+	 */
+	public boolean testConnect(){
+		try {
+			NiftyClientChannel channel = getClientManager().createChannel(getConnector()).get();
+			channel.close();
+			return true;
+		} catch (Exception e) {			
+		}
+		return false;
+	}
     public <V> void addCallback(
             final ListenableFuture<V> future,
             final FutureCallback<? super V> callback) {
