@@ -483,4 +483,16 @@ public class ClientFactory {
 			future.addListener(listener, executor);			
 		}    	
     }
+    static{
+		// JVM 结束时自动清除资源池中所有对象
+		Runtime.getRuntime().addShutdownHook(new Thread(){
+
+			@Override
+			public void run() {
+				for(GenericObjectPool<?> pool:INSTANCE_POOL_CACHE.asMap().values()){
+					pool.close();
+				}
+			}			
+		});
+    }
 }
