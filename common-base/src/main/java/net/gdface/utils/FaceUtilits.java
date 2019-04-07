@@ -33,15 +33,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 /**
  * @author guyadong
  *
  */
 public class FaceUtilits {
-	private static final Pattern MD5_PATTERN = Pattern.compile("[0-9a-f]{32}",
-			Pattern.CASE_INSENSITIVE);
+	private static final String MD5_REGEX = "^[a-fA-F0-9]{32}$";
+	private static final String HEX_REGEX  = "^([a-fA-F0-9]{2})+$";
 	/**
 	 * 生成MD5校验码
 	 * 
@@ -107,7 +106,13 @@ public class FaceUtilits {
 	static public String toHex(ByteBuffer buffer) {
 		return toHex(getBytesInBuffer(buffer));  
 	}
-	
+	/**
+	 * 字符串验证器,根据正则表达式判断字符串是否为十六进制(HEX)字符串
+	 * 输入为null或空或正则表达式不匹配则返回false
+	 */
+	public boolean validHEX(String input){
+		return input != null && input.matches(HEX_REGEX);
+	}
     public static byte[] hex2Bytes(String src){
     	if(null == src){
     		return null;
@@ -164,7 +169,7 @@ public class FaceUtilits {
 	 * @return
 	 */
 	public static final boolean validMd5(String md5){
-		return null!=md5&&MD5_PATTERN.matcher(md5).matches();
+		return null != md5 && md5.matches(MD5_REGEX);
 	}
 	/**
 	 * 从{@link InputStream}读取字节数组<br>

@@ -8,7 +8,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 /**
  * 应用程序配置参数抽象类
@@ -58,7 +57,7 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 			} else{
 				exit = true;
 			}
-		}catch (ParseException e) {
+		}catch (Exception e) {
 			logger.warning(e.getMessage());
 			exit = true;
 		}
