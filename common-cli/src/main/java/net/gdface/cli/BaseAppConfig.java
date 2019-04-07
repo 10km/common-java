@@ -46,7 +46,6 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 		CommandLine cl = null;
 		Options opts = getOptions();
 		opts.addOption(HELP_OPTION, HELP_OPTION_LONG, false, HELP_OPTION_DESC);
-		String formatstr = getCmdLineSyntax();
 		boolean exit = false;
 		try {
 			// 处理Options和参数
@@ -65,7 +64,7 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 		}
 		if (exit) {
 			 // 如果发生异常，则打印出帮助信息
-			formatter.printHelp(formatstr, getOptions());
+			formatter.printHelp(getCmdLineSyntax(), getHeader(),getOptions(),getFooter());
 			System.exit(1);
 		}
 		return this;
@@ -88,5 +87,20 @@ public abstract class BaseAppConfig extends AbstractConfiguration
 	}
 	protected String getAppName(){
 		return "Appname";
+	}
+	/**
+	 * @return
+	 * @see HelpFormatter#printHelp(String, String, Options, String)
+	 */
+	protected String getHeader() {
+		return null;
+	}
+	/**
+	 * @return
+	 * @see HelpFormatter#printHelp(String, String, Options, String)
+	 */
+	protected String getFooter() {
+		return null;
+		
 	}
 }
