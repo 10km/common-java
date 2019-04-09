@@ -155,7 +155,7 @@ public final class ServiceRuntimeException extends RuntimeException{
     /** 
      * return JSON string of declared field values if cause is subclass of this class 
      * and override {@code jsonOfDeclaredFields} method, otherwise return empty string
-     * @see {@link #jsonOfDeclaredFields()}
+     * @see #jsonOfDeclaredFields()
      */
     @ThriftField(4)
     public String getCauseFields() {

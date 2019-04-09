@@ -166,7 +166,6 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 	}
 	/**
 	 *  对图像数据指定的区域解码返回灰度图像数据
-	 * @param rect 解码区域,为null时全图解码
 	 * @return 灰度图像矩阵数据
 	 * @throws UnsupportedFormatException
 	 */

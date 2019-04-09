@@ -341,8 +341,8 @@ public class ImageUtil {
 	 * 从源{@link BufferedImage}对象创建一份拷贝
 	 * @param src
 	 * @param imageType 创建的{@link BufferedImage}目标对象类型
-	 * @return
-	 * @see {@link BufferedImage#BufferedImage(int, int, int)}
+	 * @return 返回拷贝的对象
+	 * @see BufferedImage#BufferedImage(int, int, int)
 	 */
 	public static  BufferedImage copy(Image src,int imageType){
 		if(null==src){
@@ -360,8 +360,8 @@ public class ImageUtil {
 	/**
 	 * 创建{@link BufferedImage#TYPE_3BYTE_BGR}类型的拷贝
 	 * @param src
-	 * @return
-	 * @see #copy(BufferedImage, int)
+	 * @return 返回拷贝的对象
+	 * @see #copy(Image, int)
 	 */
 	public static  BufferedImage copy(BufferedImage src){
 		return copy(src,BufferedImage.TYPE_3BYTE_BGR);
@@ -370,7 +370,7 @@ public class ImageUtil {
 	 * 对原图缩放，返回缩放后的新对象
 	 * @param src
 	 * @param scale
-	 * @return
+	 * @return 返回缩放后的新对象
 	 */
 	public static BufferedImage scale(BufferedImage src,double scale){
 		if(null==src){
@@ -392,7 +392,7 @@ public class ImageUtil {
 	 * @param top
 	 * @param right
 	 * @param bottom
-	 * @return
+	 * @return 返回扩展尺寸后的新对象
 	 */
 	public static BufferedImage growCanvas(Image src,int imageType,int left,int top,int right,int bottom){
 		if(null==src){

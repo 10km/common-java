@@ -10,7 +10,7 @@ import com.google.common.base.Preconditions;
  * all {@link RuntimeException} threw from service was wrapped to the exception<br>
  * catch the exception to retrieve detail error message from service<br>
  * retrieve service stack trace message by call {@link #getServiceStackTraceMessage()}<br>
- * get exception type by call {@link getType()}
+ * get exception type by call {@link #getType()}
  * @author guyadong
  *
  */

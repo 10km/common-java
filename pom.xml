@@ -29,6 +29,24 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<configuration>
+						<detectLinks>false</detectLinks>
+						<detectOfflineLinks>true</detectOfflineLinks>
+						<linksource>true</linksource>
+						<detectJavaApiLink>false</detectJavaApiLink>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>javadoc</goal>
+								<goal>test-javadoc</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
 					<version>1.0.0</version>
