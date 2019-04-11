@@ -102,6 +102,9 @@ public class ClientFactory {
 	public Executor getExecutor() {
 		return executor;
 	}
+	public HostAndPort getHostAndPort(){
+        return checkNotNull(this.hostAndPort,"hostAndPort is null");
+    }
 	@SuppressWarnings("unchecked")
 	public <T> ClientFactory setDecorator(Function<T, T> decorator) {
 		this.decorator = (Function<Object, Object>) decorator;

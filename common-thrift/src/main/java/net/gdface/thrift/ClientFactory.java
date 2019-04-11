@@ -182,7 +182,7 @@ public class ClientFactory {
 		this.decorator = (Function<Object, Object>) decorator;
 		return this;
 	}
-	private HostAndPort getHostAndPort(){
+	public HostAndPort getHostAndPort(){
         return checkNotNull(this.hostAndPort,"hostAndPort is null");
     }
     private NiftyClientConnector<? extends NiftyClientChannel> getConnector(){
