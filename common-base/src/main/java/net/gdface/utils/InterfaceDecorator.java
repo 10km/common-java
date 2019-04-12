@@ -71,7 +71,6 @@ public class InterfaceDecorator<I,T> implements InvocationHandler,Delegator<T>{
 	}
 	@Override
 	public T delegate() {
-		// TODO 自动生成的方法存根
 		return delegate;
 	}
 }
