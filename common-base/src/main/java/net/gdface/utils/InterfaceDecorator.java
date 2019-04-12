@@ -13,7 +13,7 @@ import java.lang.reflect.Proxy;
  * @param <I> 接口类型
  * @param <T> 接口实现类型
  */
-public class InterfaceDecorator<I,T> implements InvocationHandler{
+public class InterfaceDecorator<I,T> implements InvocationHandler,Delegator<T>{
 	private final Class<I> interfaceClass;
 	protected final T delegate;
 
@@ -60,13 +60,6 @@ public class InterfaceDecorator<I,T> implements InvocationHandler{
 	}
 
 	/**
-	 * 返回代理的接口实例
-	 * @return
-	 */
-	public final T getDelegate() {
-		return delegate;
-	}
-	/**
 	 * 根据当前对象创建新的接口实例{@link Proxy}
 	 * @return
 	 */
@@ -75,5 +68,10 @@ public class InterfaceDecorator<I,T> implements InvocationHandler{
 				interfaceClass.getClassLoader(),
 				new Class<?>[]{ interfaceClass},
 				this));
+	}
+	@Override
+	public T delegate() {
+		// TODO 自动生成的方法存根
+		return delegate;
 	}
 }
