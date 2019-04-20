@@ -1,9 +1,14 @@
 package net.gdface.utils;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +22,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.base.Predicates;
 
 import com.google.common.base.Joiner;
-
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
@@ -270,6 +275,96 @@ public class NetworkUtil {
 			if(socket != null){
 				socket.close();
 			}
+		}
+	}
+	/**
+	 * 向指定的url发送http请求
+	 * @param url
+	 * @param requestType 请求类型，see {@link HttpURLConnection#setRequestMethod(String)}
+	 * @return 返回响应数据，请求失败返回{@code null}
+	 */
+	public static String sendHttpRequest(URL url,String requestType) {
+	
+	    HttpURLConnection con = null;  
+	
+	    BufferedReader buffer = null; 
+	    StringBuffer resultBuffer = null;  
+	
+	    try {
+	        //得到连接对象
+	        con = (HttpURLConnection) url.openConnection(); 
+	        //设置请求类型
+	        con.setRequestMethod(requestType);  
+	        //设置请求需要返回的数据类型和字符集类型
+	        con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");  
+	        //允许写出
+	        con.setDoOutput(true);
+	        //允许读入
+	        con.setDoInput(true);
+	        //不使用缓存
+	        con.setUseCaches(false);
+	        //得到响应码
+	        int responseCode = con.getResponseCode();
+	
+	        if(responseCode == HttpURLConnection.HTTP_OK){
+	            //得到响应流
+	            InputStream inputStream = con.getInputStream();
+	            //将响应流转换成字符串
+	            resultBuffer = new StringBuffer();
+	            String line;
+	            buffer = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+	            while ((line = buffer.readLine()) != null) {
+	                resultBuffer.append(line);
+	            }
+	            return resultBuffer.toString();
+	        }
+	
+	    }catch(Exception e) {
+	    }finally {
+			if (con != null){
+				con.disconnect();
+			}
+		}
+	    return null;
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url 测试的url
+	 * @param responseValidator 用于验证响应数据是否有效的验证器，
+	 * 有效返回{@code true},否则返回{@code false},为{@code null}时,只要连接成功就返回{@code true}
+	 * @return 连接成功返回{@code true}否则返回{@code false}
+	 */
+	public static boolean testHttpConnect(URL url,Predicate<String> responseValidator){
+		String reponse = sendHttpRequest(url,"GET");
+		responseValidator = MoreObjects.firstNonNull(responseValidator, Predicates.<String>alwaysTrue());
+		return reponse == null ? false : responseValidator.apply(reponse);
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url 测试的url
+	 * @param responseValidator
+	 * @return 连接成功返回{@code true}否则返回{@code false}
+	 * @see #testHttpConnect(URL, Predicate)
+	 */
+	public static boolean testHttpConnect(String url,Predicate<String> responseValidator){
+		try {
+			return testHttpConnect(new URL(url),responseValidator);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url 测试的url
+	 * @param responseValidator
+	 * @return 连接成功返回{@code true}否则返回{@code false}
+	 * @see #testHttpConnect(URL, Predicate)
+	 */
+	public static boolean testHttpConnect(String host,int port,Predicate<String> responseValidator){
+		try {
+			return testHttpConnect(new URL("http",host,port,""), responseValidator);
+		} catch (Exception e) {
+			return false;
 		}
 	}
 }
