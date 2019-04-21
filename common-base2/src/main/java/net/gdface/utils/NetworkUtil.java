@@ -393,7 +393,7 @@ public class NetworkUtil {
 	 * 连接失败{@link ConnectStatus#FAIL}返回{@code false}
 	 * 响应无效{@link ConnectStatus#INVALID_RESPONE}抛出异常
 	 * @see #testHttpConnect(URL, Predicate)
-	 * @throws IllegalStateException 连接响应无效,连接状态为 {@link ConnectStatus#INVALID_RESPONE}时
+	 * @throws IllegalStateException 连接响应无效
 	 */
 	public static boolean testHttpConnectChecked(URL url,Predicate<String> responseValidator){
 		ConnectStatus status = testHttpConnect(url,responseValidator);
