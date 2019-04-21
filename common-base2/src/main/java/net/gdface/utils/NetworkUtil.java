@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
@@ -328,41 +328,101 @@ public class NetworkUtil {
 	    return null;
 	}
 	/**
+	 * 连接测试返回状态
+	 * @author guyadong
+	 *
+	 */
+	public static enum ConnectStatus{		
+		/** 连接成功,http响应有效 */CONNECTABLE,
+		/** 可连接,http响应无效 */INVALID_RESPONE,
+		/** 连接失败 */FAIL
+	}
+	/**
 	 * 测试http连接是否可连接
 	 * @param url 测试的url
 	 * @param responseValidator 用于验证响应数据是否有效的验证器，
-	 * 有效返回{@code true},否则返回{@code false},为{@code null}时,只要连接成功就返回{@code true}
-	 * @return 连接成功返回{@code true}否则返回{@code false}
+	 * 有效返回{@link ConnectStatus#CONNECTABLE},否则返回{@link ConnectStatus#INVALID_RESPONE} ,
+	 * 为{@code null}时,只要连接成功就返回{@link ConnectStatus#CONNECTABLE}
+	 * @return 连接状态{@link ConnectStatus}
 	 */
-	public static boolean testHttpConnect(URL url,Predicate<String> responseValidator){
+	public static ConnectStatus testHttpConnect(URL url,Predicate<String> responseValidator){
 		String reponse = sendHttpRequest(url,"GET");
 		responseValidator = MoreObjects.firstNonNull(responseValidator, Predicates.<String>alwaysTrue());
-		return reponse == null ? false : responseValidator.apply(reponse);
+		return reponse == null 
+				? ConnectStatus.FAIL : 
+					(responseValidator.apply(reponse) 
+						? ConnectStatus.CONNECTABLE : ConnectStatus.INVALID_RESPONE);
 	}
 	/**
 	 * 测试http连接是否可连接
 	 * @param url 测试的url
 	 * @param responseValidator
-	 * @return 连接成功返回{@code true}否则返回{@code false}
+	 * @return 连接状态{@link ConnectStatus}
 	 * @see #testHttpConnect(URL, Predicate)
 	 */
-	public static boolean testHttpConnect(String url,Predicate<String> responseValidator){
+	public static ConnectStatus testHttpConnect(String url,Predicate<String> responseValidator){
 		try {
 			return testHttpConnect(new URL(url),responseValidator);
 		} catch (Exception e) {
-			return false;
+			return ConnectStatus.FAIL;
 		}
 	}
 	/**
 	 * 测试http连接是否可连接
 	 * @param url 测试的url
 	 * @param responseValidator
-	 * @return 连接成功返回{@code true}否则返回{@code false}
+	 * @return 连接状态{@link ConnectStatus}
 	 * @see #testHttpConnect(URL, Predicate)
 	 */
-	public static boolean testHttpConnect(String host,int port,Predicate<String> responseValidator){
+	public static ConnectStatus testHttpConnect(String host,int port,Predicate<String> responseValidator){
 		try {
 			return testHttpConnect(new URL("http",host,port,""), responseValidator);
+		} catch (Exception e) {
+			return ConnectStatus.FAIL;
+		}
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url
+	 * @param responseValidator
+	 * @return 连接成功{@link ConnectStatus#CONNECTABLE}返回{@code true},
+	 * 连接失败{@link ConnectStatus#FAIL}返回{@code false}
+	 * 响应无效{@link ConnectStatus#INVALID_RESPONE}抛出异常
+	 * @see #testHttpConnect(URL, Predicate)
+	 * @throws IllegalStateException 连接响应无效,连接状态为 {@link ConnectStatus#INVALID_RESPONE}时
+	 */
+	public static boolean testHttpConnectChecked(URL url,Predicate<String> responseValidator){
+		ConnectStatus status = testHttpConnect(url,responseValidator);
+		checkState(status != ConnectStatus.INVALID_RESPONE,"INVALID INVALID_RESPONE from %s",url);
+		return status == ConnectStatus.CONNECTABLE;
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url
+	 * @param responseValidator
+	 * @return
+	 * @see #testHttpConnectChecked(URL, Predicate)
+	 * @throws IllegalStateException 连接响应无效,连接状态为 {@link ConnectStatus#INVALID_RESPONE}时
+	 */
+	public static boolean testHttpConnectChecked(String url,Predicate<String> responseValidator){
+		try {
+			return testHttpConnectChecked(new URL(url),responseValidator);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param host
+	 * @param port
+	 * @param responseValidator
+	 * @return
+	 * @see #testHttpConnectChecked(URL, Predicate)
+	 * @throws IllegalStateException 连接响应无效,连接状态为 {@link ConnectStatus#INVALID_RESPONE}时
+	 */
+	public static boolean testHttpConnectChecked(String host,int port,Predicate<String> responseValidator){
+		try {
+			return testHttpConnectChecked(new URL("http",host,port,""), responseValidator);
 		} catch (Exception e) {
 			return false;
 		}
