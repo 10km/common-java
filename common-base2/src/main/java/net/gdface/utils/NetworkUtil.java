@@ -333,15 +333,19 @@ public class NetworkUtil {
 	 *
 	 */
 	public static enum ConnectStatus{		
-		/** 连接成功,http响应有效 */CONNECTABLE,
+		/** 可连接,http响应有效 */CONNECTABLE,
 		/** 可连接,http响应无效 */INVALID_RESPONE,
 		/** 连接失败 */FAIL
 	}
 	/**
-	 * 测试http连接是否可连接
+	 * 测试http连接是否可连接<br>
+	 * 连接失败返回{@link ConnectStatus#FAIL},
+	 * 建立连接后用
+	 * {@code responseValidator}验证响应数据，{@code responseValidator}返回{@code true}则连接有效返回{@link ConnectStatus#CONNECTABLE},
+	 * {@code responseValidator}返回{@code false}则连接无效返回{@link ConnectStatus#INVALID_RESPONE} ,
+	 * 
 	 * @param url 测试的url
-	 * @param responseValidator 用于验证响应数据是否有效的验证器，
-	 * 有效返回{@link ConnectStatus#CONNECTABLE},否则返回{@link ConnectStatus#INVALID_RESPONE} ,
+	 * @param responseValidator 用于验证响应数据是否有效的验证器,
 	 * 为{@code null}时,只要连接成功就返回{@link ConnectStatus#CONNECTABLE}
 	 * @return 连接状态{@link ConnectStatus}
 	 */
