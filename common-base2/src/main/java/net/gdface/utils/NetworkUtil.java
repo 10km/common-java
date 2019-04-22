@@ -122,7 +122,12 @@ public class NetworkUtil {
         List<String> hex = Lists.transform(Bytes.asList(source),new Function<Byte,String>(){
             @Override
             public String apply(Byte input) {
-            	return Integer.toString(input & 0xff, radix.value);
+            	switch (radix) {
+				case HEX:
+					return String.format("%02x", input & 0xff);
+				default:
+	            	return Integer.toString(input & 0xff, radix.value);
+				}
             }});
         return Joiner.on(separator).join(hex);
     }
