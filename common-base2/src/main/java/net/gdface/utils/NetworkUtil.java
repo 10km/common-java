@@ -1,15 +1,20 @@
 package net.gdface.utils;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
@@ -17,7 +22,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.base.Predicates;
 
 import com.google.common.base.Joiner;
-
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
@@ -275,6 +280,160 @@ public class NetworkUtil {
 			if(socket != null){
 				socket.close();
 			}
+		}
+	}
+	/**
+	 * 向指定的url发送http请求
+	 * @param url
+	 * @param requestType 请求类型，see {@link HttpURLConnection#setRequestMethod(String)}
+	 * @return 返回响应数据，请求失败返回{@code null}
+	 */
+	public static String sendHttpRequest(URL url,String requestType) {
+	
+	    HttpURLConnection con = null;  
+	
+	    BufferedReader buffer = null; 
+	    StringBuffer resultBuffer = null;  
+	
+	    try {
+	        //得到连接对象
+	        con = (HttpURLConnection) url.openConnection(); 
+	        //设置请求类型
+	        con.setRequestMethod(requestType);  
+	        //设置请求需要返回的数据类型和字符集类型
+	        con.setRequestProperty("Content-Type", "application/json;charset=UTF-8");  
+	        //允许写出
+	        con.setDoOutput(true);
+	        //允许读入
+	        con.setDoInput(true);
+	        //不使用缓存
+	        con.setUseCaches(false);
+	        //得到响应码
+	        int responseCode = con.getResponseCode();
+	
+	        if(responseCode == HttpURLConnection.HTTP_OK){
+	            //得到响应流
+	            InputStream inputStream = con.getInputStream();
+	            //将响应流转换成字符串
+	            resultBuffer = new StringBuffer();
+	            String line;
+	            buffer = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+	            while ((line = buffer.readLine()) != null) {
+	                resultBuffer.append(line);
+	            }
+	            return resultBuffer.toString();
+	        }
+	
+	    }catch(Exception e) {
+	    }finally {
+			if (con != null){
+				con.disconnect();
+			}
+		}
+	    return null;
+	}
+	/**
+	 * 连接测试返回状态
+	 * @author guyadong
+	 *
+	 */
+	public static enum ConnectStatus{		
+		/** 可连接,http响应有效 */CONNECTABLE,
+		/** 可连接,http响应无效 */INVALID_RESPONE,
+		/** 连接失败 */FAIL
+	}
+	/**
+	 * 测试http连接是否可连接<br>
+	 * 连接失败返回{@link ConnectStatus#FAIL},
+	 * 建立连接后用
+	 * {@code responseValidator}验证响应数据，{@code responseValidator}返回{@code true}则连接有效返回{@link ConnectStatus#CONNECTABLE},
+	 * {@code responseValidator}返回{@code false}则连接无效返回{@link ConnectStatus#INVALID_RESPONE} ,
+	 * 
+	 * @param url 测试的url
+	 * @param responseValidator 用于验证响应数据是否有效的验证器,
+	 * 为{@code null}时,只要连接成功就返回{@link ConnectStatus#CONNECTABLE}
+	 * @return 连接状态{@link ConnectStatus}
+	 */
+	public static ConnectStatus testHttpConnect(URL url,Predicate<String> responseValidator){
+		String reponse = sendHttpRequest(url,"GET");
+		responseValidator = MoreObjects.firstNonNull(responseValidator, Predicates.<String>alwaysTrue());
+		return reponse == null 
+				? ConnectStatus.FAIL : 
+					(responseValidator.apply(reponse) 
+						? ConnectStatus.CONNECTABLE : ConnectStatus.INVALID_RESPONE);
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url 测试的url
+	 * @param responseValidator
+	 * @return 连接状态{@link ConnectStatus}
+	 * @see #testHttpConnect(URL, Predicate)
+	 */
+	public static ConnectStatus testHttpConnect(String url,Predicate<String> responseValidator){
+		try {
+			return testHttpConnect(new URL(url),responseValidator);
+		} catch (Exception e) {
+			return ConnectStatus.FAIL;
+		}
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url 测试的url
+	 * @param responseValidator
+	 * @return 连接状态{@link ConnectStatus}
+	 * @see #testHttpConnect(URL, Predicate)
+	 */
+	public static ConnectStatus testHttpConnect(String host,int port,Predicate<String> responseValidator){
+		try {
+			return testHttpConnect(new URL("http",host,port,""), responseValidator);
+		} catch (Exception e) {
+			return ConnectStatus.FAIL;
+		}
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url
+	 * @param responseValidator
+	 * @return 连接成功{@link ConnectStatus#CONNECTABLE}返回{@code true},
+	 * 连接失败{@link ConnectStatus#FAIL}返回{@code false}
+	 * 响应无效{@link ConnectStatus#INVALID_RESPONE}抛出异常
+	 * @see #testHttpConnect(URL, Predicate)
+	 * @throws IllegalStateException 连接响应无效
+	 */
+	public static boolean testHttpConnectChecked(URL url,Predicate<String> responseValidator){
+		ConnectStatus status = testHttpConnect(url,responseValidator);
+		checkState(status != ConnectStatus.INVALID_RESPONE,"INVALID INVALID_RESPONE from %s",url);
+		return status == ConnectStatus.CONNECTABLE;
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param url
+	 * @param responseValidator
+	 * @return
+	 * @see #testHttpConnectChecked(URL, Predicate)
+	 * @throws IllegalStateException 连接响应无效,连接状态为 {@link ConnectStatus#INVALID_RESPONE}时
+	 */
+	public static boolean testHttpConnectChecked(String url,Predicate<String> responseValidator){
+		try {
+			return testHttpConnectChecked(new URL(url),responseValidator);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	/**
+	 * 测试http连接是否可连接
+	 * @param host
+	 * @param port
+	 * @param responseValidator
+	 * @return
+	 * @see #testHttpConnectChecked(URL, Predicate)
+	 * @throws IllegalStateException 连接响应无效,连接状态为 {@link ConnectStatus#INVALID_RESPONE}时
+	 */
+	public static boolean testHttpConnectChecked(String host,int port,Predicate<String> responseValidator){
+		try {
+			return testHttpConnectChecked(new URL("http",host,port,""), responseValidator);
+		} catch (Exception e) {
+			return false;
 		}
 	}
 }
