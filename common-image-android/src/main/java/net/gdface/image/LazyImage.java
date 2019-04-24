@@ -48,7 +48,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 			}
 			return this;
 		} catch(Exception e){
-			throw new NotImageException();
+			throw new NotImageException(e);
 		}finally {
 			if (autoClose)
 				try {

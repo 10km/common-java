@@ -56,7 +56,7 @@ public class LazyImage extends BaseLazyImage implements ImageMatrix{
 					} 
 				else {
 					// 没有找到对应的图像解码则招聘异常
-					throw new NotImageException();
+					throw new NotImageException("NOT FOUND MATCHED ImageReader");
 				}
 			}else{
 				this.width = bufferedImage.getWidth();
