@@ -3,6 +3,9 @@ package com.facebook.swift.service;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TJSONProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
@@ -12,6 +15,9 @@ import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.*;
 
+import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
+import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftEventHandler;
 import com.facebook.swift.service.ThriftServer;
@@ -21,6 +27,7 @@ import com.facebook.swift.service.ThriftServiceProcessor;
 import com.facebook.swift.service.metadata.ThriftServiceMetadata;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -32,6 +39,22 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class ThriftServerService extends AbstractIdleService{
     private static final Logger logger = LoggerFactory.getLogger(ThriftServerService.class);
+    public static final ImmutableMap<String,TDuplexProtocolFactory> DEFAULT_PROTOCOL_FACTORIES;
+    public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES;
+    static{
+    	{
+    		com.google.common.collect.ImmutableMap.Builder<String, TDuplexProtocolFactory> builder =ImmutableMap.builder();
+    		builder.putAll(ThriftServer.DEFAULT_PROTOCOL_FACTORIES);
+    		builder.put("json", TDuplexProtocolFactory.fromSingleFactory(new TJSONProtocol.Factory()));
+    		DEFAULT_PROTOCOL_FACTORIES = builder.build();
+    	}
+    	{
+    		com.google.common.collect.ImmutableMap.Builder<String, ThriftFrameCodecFactory> builder =ImmutableMap.builder();
+    		builder.putAll(ThriftServer.DEFAULT_FRAME_CODEC_FACTORIES);
+    		builder.put("http", (ThriftFrameCodecFactory) new DefaultThriftFrameCodecFactory());
+    		DEFAULT_FRAME_CODEC_FACTORIES = builder.build();
+    	}
+    }
 
 	public static class Builder {
 		private List<?> services = ImmutableList.of();
