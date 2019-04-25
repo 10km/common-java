@@ -16,68 +16,65 @@ import net.gdface.utils.Assert;
  */
 public class ImageUtil {
 	/**
+	 * 如果{@code bitmap}不是RGBA({@link Bitmap.Config#ARGB_8888})格式则转为RGBA格式
+	 * @param bitmap
+	 * @return RGBA格式的{@link Bitmap}
+	 */
+	private static Bitmap rgbaCopyOf(Bitmap bitmap){
+		if(null==bitmap){
+			throw new NullPointerException("bitmap is null");
+		}
+		if( !Bitmap.Config.ARGB_8888.equals(bitmap.getConfig()) ){		
+			bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+			if(null==bitmap){
+				throw new NullPointerException("FAIL TO Bitmap.copy");
+			}
+		}
+		return bitmap;
+	}
+	/**
 	 * 对图像解码返回RGBA格式矩阵数据
 	 * @param bitmap
-	 * @return
+	 * @return RGBA格式矩阵数据
 	 */
 	public static byte[] getMatrixRGBA(Bitmap bitmap){
-		if(null==bitmap){
-			throw new NullPointerException();
-		}
-		if(bitmap.getConfig() != Bitmap.Config.ARGB_8888){		
-			bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-		}
-		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
-		bitmap.copyPixelsToBuffer(buffer);
+		Bitmap rgba = rgbaCopyOf(bitmap);
+		ByteBuffer buffer = ByteBuffer.allocate(rgba.getByteCount());
+		rgba.copyPixelsToBuffer(buffer);
 		return buffer.array();
 	}
 	/**
 	 * 对图像解码返回BGR格式矩阵数据
 	 * @param bitmap
-	 * @return
+	 * @return BGR格式矩阵数据
 	 */
 	public static byte[] getMatrixBGR(Bitmap bitmap){
-		if(null==bitmap){
-			throw new NullPointerException();
-		}
-		if(bitmap.getConfig() != Bitmap.Config.ARGB_8888){		
-			bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-		}
-		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
-		bitmap.copyPixelsToBuffer(buffer);
-		return MatrixUtils.RGBA2BGR(buffer.array(), bitmap.getWidth(), bitmap.getHeight(),bitmap.getRowBytes());
+		Bitmap rgba = rgbaCopyOf(bitmap);
+		ByteBuffer buffer = ByteBuffer.allocate(rgba.getByteCount());
+		rgba.copyPixelsToBuffer(buffer);
+		return MatrixUtils.RGBA2BGR(buffer.array(), rgba.getWidth(), rgba.getHeight(),rgba.getRowBytes());
 	}
 	/**
-	 * 对图像解码返回BGR格式矩阵数据
+	 * 对图像解码返回RGB格式矩阵数据
 	 * @param bitmap
-	 * @return
+	 * @return RGB格式矩阵数据
 	 */
 	public static byte[] getMatrixRGB(Bitmap bitmap){
-		if(null==bitmap){
-			throw new NullPointerException();
-		}
-		if(bitmap.getConfig() != Bitmap.Config.ARGB_8888){		
-			bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-		}
-		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
-		bitmap.copyPixelsToBuffer(buffer);
-		return MatrixUtils.RGBA2RGB(buffer.array(), bitmap.getWidth(), bitmap.getHeight(),bitmap.getRowBytes());
+		Bitmap rgba = rgbaCopyOf(bitmap);
+		ByteBuffer buffer = ByteBuffer.allocate(rgba.getByteCount());
+		rgba.copyPixelsToBuffer(buffer);
+		return MatrixUtils.RGBA2RGB(buffer.array(), rgba.getWidth(), rgba.getHeight(),rgba.getRowBytes());
 	}
 	/**
-	 * 对图像解码返回BGR格式矩阵数据
+	 * 对图像解码返回GRAY格式矩阵数据
 	 * @param bitmap
-	 * @return
+	 * @return GRAY格式矩阵数据
 	 */
 	public static byte[] getMatrixGRAY(Bitmap bitmap){
-		if(null==bitmap){
-			throw new NullPointerException();
-		}
-		if(bitmap.getConfig() != Bitmap.Config.ARGB_8888){		
-			bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-		}
-		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
-		bitmap.copyPixelsToBuffer(buffer);
-		return MatrixUtils.RGBA2GRAY(buffer.array(), bitmap.getWidth(), bitmap.getHeight(),bitmap.getRowBytes());
+		Bitmap rgba = rgbaCopyOf(bitmap);
+		ByteBuffer buffer = ByteBuffer.allocate(rgba.getByteCount());
+		rgba.copyPixelsToBuffer(buffer);
+		return MatrixUtils.RGBA2GRAY(buffer.array(), rgba.getWidth(), rgba.getHeight(),rgba.getRowBytes());
 	}
 	public static byte[] wirteJPEGBytes(Bitmap source){
 		return wirteJPEGBytes(source,null);
