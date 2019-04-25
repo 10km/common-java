@@ -45,7 +45,7 @@ public class ImageUtil {
 		}
 		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
 		bitmap.copyPixelsToBuffer(buffer);
-		return MatrixUtils.RGBA2BGR(buffer.array(), bitmap.getWidth(), bitmap.getHeight());
+		return MatrixUtils.RGBA2BGR(buffer.array(), bitmap.getWidth(), bitmap.getHeight(),bitmap.getRowBytes());
 	}
 	/**
 	 * 对图像解码返回BGR格式矩阵数据
@@ -61,7 +61,7 @@ public class ImageUtil {
 		}
 		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
 		bitmap.copyPixelsToBuffer(buffer);
-		return MatrixUtils.RGBA2RGB(buffer.array(), bitmap.getWidth(), bitmap.getHeight());
+		return MatrixUtils.RGBA2RGB(buffer.array(), bitmap.getWidth(), bitmap.getHeight(),bitmap.getRowBytes());
 	}
 	/**
 	 * 对图像解码返回BGR格式矩阵数据
@@ -77,7 +77,7 @@ public class ImageUtil {
 		}
 		ByteBuffer buffer = ByteBuffer.allocate(bitmap.getByteCount());
 		bitmap.copyPixelsToBuffer(buffer);
-		return MatrixUtils.RGBA2GRAY(buffer.array(), bitmap.getWidth(), bitmap.getHeight());
+		return MatrixUtils.RGBA2GRAY(buffer.array(), bitmap.getWidth(), bitmap.getHeight(),bitmap.getRowBytes());
 	}
 	public static byte[] wirteJPEGBytes(Bitmap source){
 		return wirteJPEGBytes(source,null);
