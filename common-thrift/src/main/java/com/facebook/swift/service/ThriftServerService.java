@@ -3,8 +3,6 @@ package com.facebook.swift.service;
 import java.lang.reflect.Constructor;
 import java.util.List;
 
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +15,7 @@ import static com.google.common.base.Preconditions.*;
 
 import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.core.NiftyTimer;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.swift.codec.ThriftCodecManager;
 import com.facebook.swift.service.ThriftEventHandler;
@@ -39,22 +38,22 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class ThriftServerService extends AbstractIdleService{
     private static final Logger logger = LoggerFactory.getLogger(ThriftServerService.class);
-    public static final ImmutableMap<String,TDuplexProtocolFactory> DEFAULT_PROTOCOL_FACTORIES;
-    public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES;
-    static{
-    	{
-    		com.google.common.collect.ImmutableMap.Builder<String, TDuplexProtocolFactory> builder =ImmutableMap.builder();
-    		builder.putAll(ThriftServer.DEFAULT_PROTOCOL_FACTORIES);
-    		builder.put("json", TDuplexProtocolFactory.fromSingleFactory(new TJSONProtocol.Factory()));
-    		DEFAULT_PROTOCOL_FACTORIES = builder.build();
-    	}
-    	{
-    		com.google.common.collect.ImmutableMap.Builder<String, ThriftFrameCodecFactory> builder =ImmutableMap.builder();
-    		builder.putAll(ThriftServer.DEFAULT_FRAME_CODEC_FACTORIES);
-    		builder.put("http", (ThriftFrameCodecFactory) new DefaultThriftFrameCodecFactory());
-    		DEFAULT_FRAME_CODEC_FACTORIES = builder.build();
-    	}
-    }
+    /**
+     * 在{@link ThriftServer#DEFAULT_PROTOCOL_FACTORIES}基础上增加'json'支持
+     */
+    public static final ImmutableMap<String,TDuplexProtocolFactory> DEFAULT_PROTOCOL_FACTORIES = 
+    		ImmutableMap.<String, TDuplexProtocolFactory>builder()
+	    		.putAll(ThriftServer.DEFAULT_PROTOCOL_FACTORIES)
+	    		.put("json", TDuplexProtocolFactory.fromSingleFactory(new TJSONProtocol.Factory()))
+	    		.build();
+    /**
+     * 在{@link ThriftServer#DEFAULT_FRAME_CODEC_FACTORIES}基础上增加'http'支持
+     */
+    public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES = 
+    		ImmutableMap.<String, ThriftFrameCodecFactory>builder()
+	    		.putAll(ThriftServer.DEFAULT_FRAME_CODEC_FACTORIES)
+	    		.put("http", (ThriftFrameCodecFactory) new ThriftHttpCodecFactory())
+	    		.build();
 
 	public static class Builder {
 		private List<?> services = ImmutableList.of();
@@ -151,12 +150,20 @@ public class ThriftServerService extends AbstractIdleService{
 				new ThriftCodecManager(), 
 				checkNotNull(eventHandlers,"eventHandlers is null"),
 				services);
-		this.thriftServer =  new ThriftServer(processor,thriftServerConfig);
-		this.serviceName = Joiner.on(",").join(Lists.transform(services, new Function<Object,String>(){
+		this.thriftServer =  new ThriftServer(processor,
+				thriftServerConfig,
+				new NiftyTimer("thrift"),
+				DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, 
+				ThriftServer.DEFAULT_WORKER_EXECUTORS, 
+				ThriftServer.DEFAULT_SECURITY_FACTORY);
+		String serviceList = Joiner.on(",").join(Lists.transform(services, new Function<Object,String>(){
 			@Override
 			public String apply(Object input) {
 				return getServiceName(input);
 			}}));
+		this.serviceName = String.format("%s(T:%s,P:%s)", 
+				serviceList,thriftServerConfig.getTransportName(),
+				thriftServerConfig.getProtocolName());
 		// Arrange to stop the server at shutdown
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -171,7 +178,7 @@ public class ThriftServerService extends AbstractIdleService{
 			}			
 		}, MoreExecutors.directExecutor());
 	}
-	
+
 	/** 
 	 * 返回注释{@link ThriftService}定义的服务名称
 	 * @see  {@link ThriftServiceMetadata#getThriftServiceAnnotation(Class)}
