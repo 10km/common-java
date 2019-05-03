@@ -1,6 +1,7 @@
 package com.facebook.swift.service;
 
 import org.jboss.netty.handler.codec.http.HttpClientCodec;
+import org.jboss.netty.handler.codec.http.HttpServerCodec;
 
 import com.facebook.nifty.codec.ThriftFrameCodec;
 
@@ -12,6 +13,6 @@ import com.facebook.nifty.codec.ThriftFrameCodec;
  * @author guyadong
  *
  */
-public class ThriftHttpCodec extends HttpClientCodec implements ThriftFrameCodec {
+public class ThriftHttpCodec extends HttpServerCodec implements ThriftFrameCodec {
 
 }

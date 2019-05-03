@@ -1,9 +1,15 @@
 package com.facebook.swift.service;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
-
 import org.apache.thrift.protocol.TJSONProtocol;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty3.handler.codec.http.cors.Netty3CorsConfig;
+import org.jboss.netty3.handler.codec.http.cors.Netty3CorsConfigBuilder;
+import org.jboss.netty3.handler.codec.http.cors.Netty3CorsHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
@@ -12,9 +18,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.*;
+import static org.jboss.netty.handler.codec.http.HttpMethod.*;
 
-import com.facebook.nifty.codec.DefaultThriftFrameCodecFactory;
 import com.facebook.nifty.codec.ThriftFrameCodecFactory;
+import com.facebook.nifty.core.NettyServerTransport;
 import com.facebook.nifty.core.NiftyTimer;
 import com.facebook.nifty.duplex.TDuplexProtocolFactory;
 import com.facebook.swift.codec.ThriftCodecManager;
@@ -31,6 +38,8 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
 
+import net.gdface.utils.ReflectionUtils;
+
 /**
  * 创建thrift服务实例{@link ThriftServer},封装为{@link com.google.common.util.concurrent.Service}
  * @author guyadong
@@ -38,13 +47,15 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class ThriftServerService extends AbstractIdleService{
     private static final Logger logger = LoggerFactory.getLogger(ThriftServerService.class);
+    public static final String HTTP_TRANSPORT = "http";
+    public static final String JSON_PROTOCOL = "json";
     /**
      * 在{@link ThriftServer#DEFAULT_PROTOCOL_FACTORIES}基础上增加'json'支持
      */
     public static final ImmutableMap<String,TDuplexProtocolFactory> DEFAULT_PROTOCOL_FACTORIES = 
     		ImmutableMap.<String, TDuplexProtocolFactory>builder()
 	    		.putAll(ThriftServer.DEFAULT_PROTOCOL_FACTORIES)
-	    		.put("json", TDuplexProtocolFactory.fromSingleFactory(new TJSONProtocol.Factory()))
+	    		.put(JSON_PROTOCOL, TDuplexProtocolFactory.fromSingleFactory(new TJSONProtocol.Factory()))
 	    		.build();
     /**
      * 在{@link ThriftServer#DEFAULT_FRAME_CODEC_FACTORIES}基础上增加'http'支持
@@ -52,7 +63,7 @@ public class ThriftServerService extends AbstractIdleService{
     public static final ImmutableMap<String,ThriftFrameCodecFactory> DEFAULT_FRAME_CODEC_FACTORIES = 
     		ImmutableMap.<String, ThriftFrameCodecFactory>builder()
 	    		.putAll(ThriftServer.DEFAULT_FRAME_CODEC_FACTORIES)
-	    		.put("http", (ThriftFrameCodecFactory) new ThriftHttpCodecFactory())
+	    		.put(HTTP_TRANSPORT, (ThriftFrameCodecFactory) new ThriftHttpCodecFactory())
 	    		.build();
 
 	public static class Builder {
@@ -156,6 +167,8 @@ public class ThriftServerService extends AbstractIdleService{
 				DEFAULT_FRAME_CODEC_FACTORIES, DEFAULT_PROTOCOL_FACTORIES, 
 				ThriftServer.DEFAULT_WORKER_EXECUTORS, 
 				ThriftServer.DEFAULT_SECURITY_FACTORY);
+		addCorsHandlerIfHttp();
+
 		String serviceList = Joiner.on(",").join(Lists.transform(services, new Function<Object,String>(){
 			@Override
 			public String apply(Object input) {
@@ -179,6 +192,61 @@ public class ThriftServerService extends AbstractIdleService{
 		}, MoreExecutors.directExecutor());
 	}
 
+
+	/**
+	 * 添加CORS Handler和XHR编解码器
+	 */
+	protected void addCorsHandlerIfHttp(){
+		if(HTTP_TRANSPORT.equals(thriftServerConfig.getTransportName())){
+			try {
+				// 反射获取私有的成员NettyServerTransport
+				final NettyServerTransport nettyServerTransport = ReflectionUtils.valueOfField(thriftServer, "transport");
+				// 反射获取私有的成员ChannelPipelineFactory
+				Field pipelineFactory = NettyServerTransport.class.getDeclaredField("pipelineFactory");
+				{
+					Field modifiersField = Field.class.getDeclaredField("modifiers");
+					modifiersField.setAccessible(true); //Field 的 modifiers 是私有的
+					modifiersField.setInt(pipelineFactory, pipelineFactory.getModifiers() & ~Modifier.FINAL);
+				}
+				pipelineFactory.setAccessible(true);
+				final ChannelPipelineFactory channelPipelineFactory = (ChannelPipelineFactory) pipelineFactory.get(nettyServerTransport);
+				final Netty3CorsConfig corsConfig = Netty3CorsConfigBuilder.forAnyOrigin()
+					.allowedRequestMethods(POST,GET,OPTIONS)
+					.allowedRequestHeaders("Origin","Content-Type","Accept","application","x-requested-with")
+					.build();
+				ChannelPipelineFactory factoryWithCORS = new ChannelPipelineFactory(){
+
+					@Override
+					public ChannelPipeline getPipeline() throws Exception {
+						// 修改 ChannelPipeline,在frameCodec后(顺序)增加CORS handler,XHR编解码器
+						ChannelPipeline cp = channelPipelineFactory.getPipeline();
+//						cp.remove("idleTimeoutHandler");
+//						cp.remove("idleDisconnectHandler");
+//						final ThriftServerDef def = ReflectionUtils.valueOfField(nettyServerTransport, "def");
+//						final NettyServerConfig nettyServerConfig = ReflectionUtils.valueOfField(nettyServerTransport, "nettyServerConfig");
+//		                if (def.getClientIdleTimeout() != null) {
+//		                    // Add handlers to detect idle client connections and disconnect them
+//		                    cp.addBefore("authHandler","idleTimeoutHandler", 
+//		                    		new IdleStateHandler(nettyServerConfig.getTimer(),
+//		                                                                          0,
+//		                                                                          0,
+//		                                                                          0,
+//		                                                                          TimeUnit.MILLISECONDS));
+//		                    cp.addBefore("authHandler","idleDisconnectHandler", new IdleDisconnectHandler());
+//		                }
+						cp.addAfter("frameCodec", "thriftXHRDecoder", new ThriftXHRDecoder());
+						cp.addAfter("frameCodec", "thriftXHREncoder", new ThriftXHREncoder());
+						cp.addAfter("frameCodec", "cors", new Netty3CorsHandler(corsConfig));
+						return cp;
+					}};
+				// 修改nettyServerTransport的私有常量pipelineFactory
+				pipelineFactory.set(nettyServerTransport, factoryWithCORS);
+			} catch (Exception e) {
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
+			}
+		}
+	}
 	/** 
 	 * 返回注释{@link ThriftService}定义的服务名称
 	 * @see  {@link ThriftServiceMetadata#getThriftServiceAnnotation(Class)}
