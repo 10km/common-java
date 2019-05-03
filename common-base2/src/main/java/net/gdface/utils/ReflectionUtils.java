@@ -2,6 +2,7 @@ package net.gdface.utils;
 
 import static com.google.common.base.Preconditions.*;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -142,6 +143,23 @@ public class ReflectionUtils {
 		} catch(NoSuchMethodException e){
 			throw e;
 		}catch (Exception e) {
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
+		}
+	}
+	/**
+	 * 反射获取{@code object}的私有成员
+	 * @param object
+	 * @param name
+	 * @return 成员对象
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T valueOfField(Object object,String name){
+		try {
+			Field field = checkNotNull(object,"object is null").getClass().getDeclaredField(checkNotNull(name,"name is null"));
+			field.setAccessible(true);
+			return (T) field.get(object);
+		} catch (Exception e) {
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
