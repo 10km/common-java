@@ -44,11 +44,16 @@ public class ThriftXHRDecoder extends SimpleChannelUpstreamHandler {
 		Iterator<XHRHomepageProvider> itor = providers.iterator();
 		if(itor.hasNext()){
 			XHRHomepageProvider provider = itor.next();
-			byte [] homepage = provider.homepage() ;
-			if(homepage != null){
-				return homepage;
+			try{
+				byte [] homepage = provider.homepage();
+				if(homepage != null){
+					return homepage;
+				}
+			} catch (Exception e) {
+				// 读取异常时使用默认页面数据
 			}
 		}
+		// 返回默认HOMEPAGE数据
 		return Resources.toByteArray(ThriftXHRDecoder.class.getResource("/xhr_homepage.html"));	
 	
 	}
