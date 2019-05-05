@@ -234,8 +234,7 @@ public class ThriftServerService extends AbstractIdleService{
 //		                                                                          TimeUnit.MILLISECONDS));
 //		                    cp.addBefore("authHandler","idleDisconnectHandler", new IdleDisconnectHandler());
 //		                }
-						cp.addAfter("frameCodec", "thriftXHRDecoder", new ThriftXHRDecoder());
-						cp.addAfter("frameCodec", "thriftXHREncoder", new ThriftXHREncoder());
+						cp.addAfter("frameCodec", "thriftServerXHRCodec", new ThriftServerXHRCodec());
 						cp.addAfter("frameCodec", "cors", new Netty3CorsHandler(corsConfig));
 						return cp;
 					}};
