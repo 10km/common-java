@@ -20,7 +20,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import com.facebook.nifty.core.ThriftMessage;
 import com.facebook.nifty.core.ThriftTransportType;
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 
 /**
  * XHR(XML Http Request)解码器<br>
@@ -49,7 +49,7 @@ public class ThriftXHRDecoder extends SimpleChannelUpstreamHandler {
 				return homepage;
 			}
 		}
-		return ByteStreams.toByteArray(ThriftXHRDecoder.class.getResourceAsStream("/xhr_homepage.html"));	
+		return Resources.toByteArray(ThriftXHRDecoder.class.getResource("/xhr_homepage.html"));	
 	
 	}
 	private static byte[] loadHomepage(){
