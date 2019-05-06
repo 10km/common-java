@@ -436,4 +436,12 @@ public class NetworkUtil {
 			return false;
 		}
 	}
+	/** 
+	 * 验证MAC地址有效性
+	 * @throws IllegalArgumentException MAC地址无效
+	  */
+	public static final byte[] validateMac(byte[]mac){
+		checkArgument(null != mac && 6 == mac.length ,"INVAILD MAC address");
+		return mac;
+	}
 }
