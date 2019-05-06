@@ -19,6 +19,7 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 
 import com.facebook.nifty.core.ThriftMessage;
 import com.facebook.nifty.core.ThriftTransportType;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Resources;
 
@@ -29,8 +30,9 @@ import com.google.common.io.Resources;
  * @author guyadong
  *
  */
-public class ThriftXHRDecoder extends SimpleChannelUpstreamHandler {
+public class ThriftXHRDecoder extends SimpleChannelUpstreamHandler implements Supplier<HttpRequest> {
 	
+	private HttpRequest request;
 	public ThriftXHRDecoder() {
 	}
 	private static volatile byte[] homepage;
@@ -75,7 +77,7 @@ public class ThriftXHRDecoder extends SimpleChannelUpstreamHandler {
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
 		if(e.getMessage() instanceof HttpRequest){
-			HttpRequest request = (HttpRequest)e.getMessage();
+			request = (HttpRequest)e.getMessage();
 			if(request.getContent().readable()){
 				if(HttpMethod.POST.equals(request.getMethod())){
 					ThriftMessage thriftMessage = new ThriftMessage(request.getContent(),ThriftTransportType.UNFRAMED);
@@ -92,5 +94,9 @@ public class ThriftXHRDecoder extends SimpleChannelUpstreamHandler {
 			}
 		}
 		super.messageReceived(ctx, e);
+	}
+	@Override
+	public HttpRequest get() {
+		return request;
 	}
 }

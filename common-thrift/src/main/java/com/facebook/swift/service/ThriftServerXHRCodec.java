@@ -14,7 +14,7 @@ import org.jboss.netty.channel.ChannelUpstreamHandler;
  */
 public class ThriftServerXHRCodec implements ChannelUpstreamHandler,ChannelDownstreamHandler{
     private final ThriftXHRDecoder decoder = new ThriftXHRDecoder();
-    private final ThriftXHREncoder encoder = new ThriftXHREncoder();
+    private final ThriftXHREncoder encoder = new ThriftXHREncoder(decoder);
 	public ThriftServerXHRCodec() {
 	}
 
