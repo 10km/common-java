@@ -284,4 +284,12 @@ public class ThriftServerService extends AbstractIdleService{
 		logger.info("workerThreads: {}", config.getWorkerThreads());
 		logger.info("idleConnectionTimeout: {}", config.getIdleConnectionTimeout());
 	}
+
+
+	/**
+	 * @return thriftServerConfig
+	 */
+	public ThriftServerConfig getThriftServerConfig() {
+		return thriftServerConfig;
+	}
 }
