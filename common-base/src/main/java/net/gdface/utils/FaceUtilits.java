@@ -289,10 +289,21 @@ public class FaceUtilits {
 	}
 	
 	/**
+	 * 将数据对象{@code src}转换为字节数组(byte[])<br>
+	 * @param src 获取byte[]的源对象
+	 * @return 返回字节数组,参数为{@code null}则返回{@code null}
+	 * @throws IOException
+	 * @throws IllegalArgumentException 无法从{@code src}获取{@link InputStream}
+	 * @see #getBytes(Object)
+	 */
+	static public final <T> byte[] getBytesOrNull(T src) throws IOException, IllegalArgumentException {
+		return src == null ? null : getBytes(src);
+	}
+	/**
 	 * 调用 {@link #getBytes(Object)}返回非空字节数组<br>
 	 * 如果返回{@code null}或空字节数组，则抛出{@link IOException}<br>
-	 * @param src
-	 * @return
+	 * @param src 获取byte[]的源对象
+	 * @return 返回非空字节数组
 	 * @throws IOException
 	 * @throws IllegalArgumentException
 	 * @see #getBytes(Object)
@@ -308,20 +319,33 @@ public class FaceUtilits {
 
 	/**
 	 * 将数据对象src转换为{@link ByteBuffer}
-	 * @param src
-	 * @return
+	 * @param src 获取byte[]的源对象
+	 * @return 返回字节数组,参数为{@code null}或类型不对则抛出异常
 	 * @throws IOException
-	 * @throws IllegalArgumentException
+	 * @throws IllegalArgumentException 无法从{@code src}获取{@link InputStream}
 	 * @see #getBytes(Object)
 	 */
 	static public final <T> ByteBuffer getByteBuffer(T src) throws IOException, IllegalArgumentException {
 		return ByteBuffer.wrap(getBytes(src));
 	}
+	
+	/**
+	 * 将数据对象src转换为{@link ByteBuffer}
+	 * @param src 获取byte[]的源对象
+	 * @return 返回字节数组,参数为{@code null}则返回{@code null}
+	 * @throws IOException
+	 * @throws IllegalArgumentException 无法从{@code src}获取{@link InputStream}
+	 * @see #getBytes(Object)
+	 */
+	static public final <T> ByteBuffer getByteBufferOrNull(T src) throws IOException, IllegalArgumentException {
+		return null == src ? null : ByteBuffer.wrap(getBytes(src));
+	}
+	
 	/**
 	 * 调用 {@link #getByteBuffer(Object)}返回非空{@link ByteBuffer}<br>
 	 * 如果返回{@code null}或空，则抛出{@link IOException}<br>
 	 * @param src
-	 * @return
+	 * @return 返回非空字节数组
 	 * @throws IOException
 	 * @throws IllegalArgumentException
 	 */
