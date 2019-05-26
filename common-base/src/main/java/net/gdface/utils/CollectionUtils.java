@@ -9,10 +9,13 @@ package net.gdface.utils;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import java.util.Objects;
 
 /**
@@ -173,6 +176,60 @@ public class CollectionUtils {
     public static <F, T> Iterator<T> transform(final Iterator<F> fromIterator,
             final Function<? super F, ? extends T> transformer) {
         return new TransformedIterator<F, T>(fromIterator,transformer);
+    }
+    /**
+     * 合并两个迭代器的数据为一个{@link Map}<br>
+     * 要求两个迭代器的元素个数必须一致，
+     * 如果{@code keys}中的元素为{@code null}，
+     * 则该元素和{@code values}对应value的会自动被忽略
+     * @param keys
+     * @param values
+     * @return 合并后的{@link Map}
+     */
+    public static<K,V> Map<K, V> merge(Iterator<K> keys,Iterator<V>values){
+        if(keys == null || values == null){
+            throw new NullPointerException("keyItor or valueItor is null");
+        }
+        HashMap<K, V> map = new HashMap<K,V>();
+        while(keys.hasNext() && values.hasNext()){
+            K key = keys.next();
+            if(key != null){
+                map.put(key, values.next());
+            }
+        }
+        if(keys.hasNext() || values.hasNext()){
+            throw new IllegalArgumentException("mismatch size of keys and values");
+        }
+        return map;
+    }
+    /**
+     * 合并两个{@link Iterable}的数据为一个{@link Map}<br>
+     * 要求两个迭代器的元素个数必须一致
+     * 如果{@code keys}中的元素为{@code null}，
+     * 则该元素和{@code values}对应value的会自动被忽略
+     * @param keyItor
+     * @param valueItor
+     * @return 合并后的{@link Map}
+     */
+    public static<K,V> Map<K, V> merge(Iterable<K> keys,Iterable<V>values){
+        if(keys == null || values == null){
+            throw new NullPointerException("keys or values is null");
+        }
+        return merge(keys.iterator(),values.iterator());
+    }
+    /**
+     * 合并两个数组的数据为一个{@link Map}<br>
+     * 如果{@code keys}中的元素为{@code null}，
+     * 则该元素和{@code values}对应value的会自动被忽略
+     * @param keys
+     * @param values
+     * @return 合并后的{@link Map}
+     */
+    public static<K,V> Map<K, V> merge(K[] keys,V[]values){
+        if(keys == null || values == null){
+            throw new NullPointerException("keys or values is null");
+        }
+        return merge(Arrays.asList(keys),Arrays.asList(values));
     }
     static class TransformedIterator<F, T> implements Iterator<T> {
         final Iterator<? extends F> backingIterator;
