@@ -28,9 +28,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.Map.Entry;
+
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -596,5 +600,20 @@ public class FaceUtilits {
 			}
 		}
 		return true;
+	}
+	/**
+	 * 将{@code input}用分隔符{@code ;,\t\r\f\n}切分为不含空格和分隔符的一组字符串
+	 * @param input
+	 * @return {@code input}为{@code null}时返回空表
+	 */
+	public static List<String> elementsOf(String input) {
+		List<String> list = new ArrayList<String>();
+		if (input != null) {
+			StringTokenizer st = new StringTokenizer(input, " ,;\t\n\r\f");
+			while (st.hasMoreTokens()) {
+				list.add(st.nextToken());
+			}
+		}
+		return list;
 	}
 }
