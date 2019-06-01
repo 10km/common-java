@@ -193,7 +193,23 @@ public class ClientFactory {
 	 */
 	public<O> O  buildAsync(Class<O> destClass){
 		return build(null,null,destClass);
-    }/**
+    }
+	/**
+	 * 测试thrifty服务连接<br>
+	 * {@code timeoutMills}>0时设置连接超时参数
+	 * @param host 主机名
+	 * @param port 端口号
+	 * @param timeoutMills 指定连接超时(毫秒)
+	 * @return 连接成功返回{@code true},否则返回{@code false}
+	 */
+	public static final boolean testConnect(String host,int port,long timeoutMills){
+			ClientFactory clientFactory = ClientFactory.builder().setHostAndPort(host,port);
+			if(timeoutMills > 0){
+				clientFactory.setTimeout(timeoutMills, TimeUnit.MILLISECONDS);
+			}
+			return clientFactory.testConnect();
+	}
+	/**
 	 * 测试指定连接是否有效
 	 * @return 连接有效返回{@code true},否则返回{@code false}
 	 */

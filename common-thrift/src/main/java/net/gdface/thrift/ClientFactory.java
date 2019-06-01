@@ -381,7 +381,22 @@ public class ClientFactory {
 		Class<I> interfaceClass = (Class<I>) thriftyImplClass.getInterfaces()[0];
 		return build(interfaceClass,thriftyImplClass,destClass);
     }
-	
+
+	/**
+	 * 测试thrift服务连接<br>
+	 * {@code timeoutMills}>0时设置连接超时参数
+	 * @param host 主机名
+	 * @param port 端口号
+	 * @param timeoutMills 指定连接超时(毫秒)
+	 * @return 连接成功返回{@code true},否则返回{@code false}
+	 */
+	public static final boolean testConnect(String host,int port,long timeoutMills){
+			ClientFactory clientFactory = ClientFactory.builder().setHostAndPort(host,port);
+			if(timeoutMills > 0){
+				clientFactory.setTimeout(timeoutMills, TimeUnit.MILLISECONDS);
+			}
+			return clientFactory.testConnect();
+	}
 	/**
 	 * 测试当前连接是否有效
 	 * @return 连接有效返回{@code true},否则返回{@code false}
