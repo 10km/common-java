@@ -1,16 +1,12 @@
 package net.gdface.utils;
 
-import static org.junit.Assert.*;
-
-import java.net.UnknownHostException;
-
 import org.junit.Test;
 
-import jcifs.NetbiosAddress;
+import jcifs.Address;
+import jcifs.NameServiceClient;
 import jcifs.context.SingletonContext;
 import jcifs.netbios.NameServiceClientImpl;
 import jcifs.netbios.NbtAddress;
-import jcifs.netbios.UniAddress;
 
 public class Jcifs2Test {
 
@@ -40,18 +36,18 @@ public class Jcifs2Test {
 	@Test
 	public void test3() {
 		try {
-			final NameServiceClientImpl nsc = new NameServiceClientImpl(SingletonContext.getInstance());
+			final NameServiceClient nsc = new NameServiceClientImpl(SingletonContext.getInstance());
 			{
-				UniAddress[] addrs = nsc.getAllByName("guyadong-pc", false);
-				for(UniAddress address : addrs){
+				Address[] addrs = nsc.getAllByName("landtalkhost", true);
+				for(Address address : addrs){
 					System.out.printf("%s\n",address.toInetAddress());
 				}
 			}
 			
 			{
 				System.out.println("============");
-				UniAddress address = nsc.getByName("guyadong-pc");
-				System.out.printf("%s\n",address);
+				Address address = nsc.getByName("landtalkhost");
+				System.out.printf("%s %s\n",address,address.getHostAddress());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
