@@ -38,16 +38,18 @@ public class Jcifs2Test {
 		try {
 			final NameServiceClient nsc = new NameServiceClientImpl(SingletonContext.getInstance());
 			{
+				// 提供的主机名返回所有绑定的地址对象
 				Address[] addrs = nsc.getAllByName("landtalkhost", true);
 				for(Address address : addrs){
-					System.out.printf("%s\n",address.toInetAddress());
+					System.out.printf("%s\n",address);
 				}
 			}
 			
 			{
 				System.out.println("============");
+				// 根据提供的主机名解析为Address对象
 				Address address = nsc.getByName("landtalkhost");
-				System.out.printf("%s %s\n",address,address.getHostAddress());
+				System.out.printf("%s\n",address);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
