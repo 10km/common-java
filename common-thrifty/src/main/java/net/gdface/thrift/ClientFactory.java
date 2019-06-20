@@ -201,7 +201,7 @@ public class ClientFactory {
 	 * {@code timeoutMills}>0时设置连接超时参数
 	 * @param host 主机名
 	 * @param port 端口号
-	 * @param timeoutMills 指定连接超时(毫秒)
+	 * @param timeoutMills 指定连接超时(毫秒),<=0使用默认值
 	 * @return 连接成功返回{@code true},否则返回{@code false}
 	 */
 	public static final boolean testConnect(String host,int port,long timeoutMills){
