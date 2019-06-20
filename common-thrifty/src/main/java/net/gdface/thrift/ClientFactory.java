@@ -43,8 +43,10 @@ import static com.google.common.base.Preconditions.*;
  */
 public class ClientFactory {
     private HostAndPort hostAndPort;
-    private long readTimeout;
-    private long connectTimeout;
+    /**  the timeout value to be used for socket reading in milliseconds */
+    private long readTimeout = 1000;
+    /**  the timeout value to be used for socket connection in milliseconds */
+    private long connectTimeout = 500;
 	private Executor executor = MoreExecutors.directExecutor();
     /**
      * 接口实例代理函数对象,
