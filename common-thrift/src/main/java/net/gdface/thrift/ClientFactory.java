@@ -85,7 +85,9 @@ public class ClientFactory {
         return this;
     }
     public ClientFactory setThriftClientConfig(ThriftClientConfig thriftClientConfig) {
-        this.thriftClientConfig = thriftClientConfig;
+    	if(thriftClientConfig != null){
+    		this.thriftClientConfig = thriftClientConfig;
+    	}
         return this;
     }
     /**
