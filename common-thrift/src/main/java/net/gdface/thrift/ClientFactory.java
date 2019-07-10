@@ -63,7 +63,7 @@ public class ClientFactory {
     private static final Cache<Class<?>, ThriftClient<?>> THRIFT_CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
     private static final Cache<Class<?>, Object> CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
     /** 接口类 -- 实例资源池缓存 */
-    private static final Cache<Class<?>,GenericObjectPool<?>> INSTANCE_POOL_CACHE = CacheBuilder.newBuilder().softValues().build();;
+    private static final Cache<Class<?>,GenericObjectPool<?>> INSTANCE_POOL_CACHE = CacheBuilder.newBuilder().softValues().build();
 	private ThriftClientManager clientManager; 
     private ThriftClientConfig thriftClientConfig = new ThriftClientConfig();
     private HostAndPort hostAndPort;
