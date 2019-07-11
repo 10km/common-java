@@ -7,6 +7,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -95,12 +96,12 @@ public class MultiCastDispatcher implements Runnable{
 	 */
 	@Override
 	public void run() {
-		checkNotNull(multicastSocket,"multicastSocket is uninitizlied");
+		stopListener = Boolean.FALSE;
 		DatagramPacket packet = new DatagramPacket(message, message.length);
 		try {
-			stopListener = Boolean.FALSE;
 			while(!Boolean.TRUE .equals(stopListener)){
 				try {
+					checkArgument(multicastSocket != null,"multicastSocket is uninitizlied");
 					multicastSocket.receive(packet);
 					byte[] recevied = new byte[packet.getLength()];
 					System.arraycopy(message, 0, recevied, 0, packet.getLength());
@@ -127,8 +128,12 @@ public class MultiCastDispatcher implements Runnable{
 	
 	public boolean isRunning(){
 		return Boolean.FALSE.equals(stopListener);
+	}
+	public MultiCastDispatcher running(){
+		stopListener = Boolean.FALSE;
+		return this;
 	}	
-	public synchronized void close() {
+	public synchronized void stop() {
 		stopListener = Boolean.TRUE;
 	}
 }
