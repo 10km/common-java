@@ -17,32 +17,22 @@ public class MultiCastTest {
 	private static AtomicBoolean stop = new AtomicBoolean(false);
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		new Thread(){
+
+		// 启动组播数据接收线程
+		new Thread(new MultiCastDispatcher(hostAndPort, 200,new Predicate<byte[]>() {
 
 			@Override
-			public void run() {
+			public boolean apply(byte[] input) {
 				try {
-					recevieMultiCastLoop(hostAndPort, 200,new Predicate<byte[]>() {
-
-						@Override
-						public boolean apply(byte[] input) {
-							try {
-								System.out.write(input);
-								System.out.println();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-							return true;
-						}
-					},
-					Predicates.<Throwable>alwaysFalse(),
-					stop);
-				} catch (IOException e) {					
+					System.out.write(input);
+					System.out.println();
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				return true;
 			}
-			
-		}.start();
+		},
+		Predicates.<Throwable>alwaysFalse()).init()).start();
 
 	}
 
@@ -52,10 +42,11 @@ public class MultiCastTest {
 
 	@Test
 	public void testSend() {
-
+		
+		// 发送组播数据
 		try {
 			for(int i=0;i<100;++i){
-				sendMultiCast(hostAndPort, String.format("hello %s", i).getBytes());
+				sendMulticast(hostAndPort, String.format("hello %s", i).getBytes());
 				Thread.sleep(500);
 			}
 		} catch (IOException e) {
@@ -63,6 +54,7 @@ public class MultiCastTest {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		// 结束组播接收线程
 		stop.set(true);
 	}
 

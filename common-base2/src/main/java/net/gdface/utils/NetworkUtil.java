@@ -15,8 +15,6 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.google.common.base.Preconditions.*;
 
 import com.google.common.collect.ImmutableSet;
@@ -456,7 +454,7 @@ public class NetworkUtil {
 	 * @param ttl 
 	 * @throws IOException
 	 */
-	public static void sendMultiCast(InetAddress group,int port,byte[] message, Integer ttl) throws IOException{
+	public static void sendMulticast(InetAddress group,int port,byte[] message, Integer ttl) throws IOException{
 		checkArgument(null != group,"group is null");
 		checkArgument(group.isMulticastAddress(),"group %s is not a multicast address",group);
 		checkArgument(message != null && message.length > 0,"message is null or empty");
@@ -478,9 +476,9 @@ public class NetworkUtil {
 	 * @param message
 	 * @throws IOException
 	 */
-	public static void sendMultiCast(String bindaddr,int port,byte[] message) throws IOException{
+	public static void sendMulticast(String bindaddr,int port,byte[] message) throws IOException{
 		checkArgument(!Strings.isNullOrEmpty(bindaddr),"bindaddr is null or empty");
-		sendMultiCast(InetAddress.getByName(bindaddr),port,message, null);
+		sendMulticast(InetAddress.getByName(bindaddr),port,message, null);
 	}
 	/**
 	 * 向指定的组播地址和端口发送组播数据
@@ -488,109 +486,8 @@ public class NetworkUtil {
 	 * @param message
 	 * @throws IOException
 	 */
-	public static void sendMultiCast(String hostPort,byte[] message) throws IOException{
+	public static void sendMulticast(String hostPort,byte[] message) throws IOException{
 		HostAndPort hostAndPort = HostAndPort.fromString(hostPort);
-		sendMultiCast(InetAddress.getByName(hostAndPort.getHost()),hostAndPort.getPort(),message, null);
-	}
-	/**
-	 * 从指定的组播地址和端口接收组播数据
-	 * @param group 组播地址
-	 * @param port 端口号
-	 * @param buffer 数据接收缓冲区
-	 * @return 收到的数据长度
-	 * @throws IOException
-	 */
-	public static int recevieMultiCast(InetAddress group,int port,byte[] buffer) throws IOException{
-		checkArgument(null != group,"group is null");
-		checkArgument(group.isMulticastAddress(),"group %s is not a multicast address",group);
-		checkArgument(buffer != null && buffer.length > 0,"message is null or empty");
-
-		MulticastSocket ms = new MulticastSocket(port);
-		ms.joinGroup(group);
-		try {			
-			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-			ms.receive(packet);
-			return packet.getLength();
-		} finally {
-			ms.leaveGroup(group);
-			ms.close();
-		}
-	}
-	/**
-	 * 循环接收group,port指定的组播地址发送的数据并交给fun处理
-	 * @param group 组播地址
-	 * @param port 端口号
-	 * @param bufferSize 组播数据最大长度，根据此参数值分配数据接收缓冲区长度
-	 * @param processor 数据处理器,返回false,则中止循环
-	 * @param onerr 异常处理器,返回false,则中止循环，为{@code null}则使用默认值{@link Predicates#alwaysTrue}
-	 * @param stop 中止标记,调用者可通过些标记异步控制循环结束,可为{@code null}
-	 * @throws IOException 网络IO异常
-	 */
-	public static void recevieMultiCastLoop(InetAddress group,int port,int bufferSize,
-			Predicate<byte[]>processor,
-			Predicate<Throwable> onerr,
-			AtomicBoolean stop) throws IOException{
-		checkArgument(null != group,"group is null");
-		checkArgument(group.isMulticastAddress(),"group %s is not a multicast address",group);
-		onerr = MoreObjects.firstNonNull(onerr, Predicates.<Throwable>alwaysTrue());
-		if(stop == null){
-			stop = new AtomicBoolean(false);
-		}
-		byte[] message = new byte[bufferSize];
-		DatagramPacket packet = new DatagramPacket(message, message.length);
-		MulticastSocket ms = new MulticastSocket(port);
-		ms.joinGroup(group);
-		try {			
-			while(!stop.get()){
-				try {
-					ms.receive(packet);
-					byte[] recevied = new byte[packet.getLength()];
-					System.arraycopy(message, 0, recevied, 0, packet.getLength());
-					if(!processor.apply(recevied)){
-						break;
-					}
-				} catch (Exception e) {
-					if(!onerr.apply(e)){
-						break;
-					}
-				}
-			}
-		} finally {
-			ms.leaveGroup(group);
-			ms.close();
-		}
-	}
-	/**
-	 * @param bindaddr 组播IP地址
-	 * @param port 端口号
-	 * @param bufferSize 
-	 * @param processor
-	 * @param onerr
-	 * @param stop
-	 * @throws IOException
-	 * @see #recevieMultiCastLoop(InetAddress, int, int, Predicate, Predicate, AtomicBoolean)
-	 */
-	public static void recevieMultiCastLoop(String bindaddr,int port,int bufferSize,
-			Predicate<byte[]>processor,
-			Predicate<Throwable> onerr,
-			AtomicBoolean stop) throws IOException{
-		checkArgument(!Strings.isNullOrEmpty(bindaddr),"bindaddr is null or empty");
-		recevieMultiCastLoop(InetAddress.getByName(bindaddr),port,bufferSize,processor,onerr,stop);
-	}
-	/**
-	 * @param hostPort 组播地址和端口号(:号分隔) 如：244.12.12.12:4331,或[244.12.12.12:4331]
-	 * @param bufferSize
-	 * @param processor
-	 * @param onerr
-	 * @param stop
-	 * @throws IOException
-	 * @see #recevieMultiCastLoop(InetAddress, int, int, Predicate, Predicate, AtomicBoolean)
-	 */
-	public static void recevieMultiCastLoop(String hostPort,int bufferSize,
-			Predicate<byte[]>processor,
-			Predicate<Throwable> onerr,
-			AtomicBoolean stop) throws IOException{
-		HostAndPort hostAndPort = HostAndPort.fromString(hostPort);
-		recevieMultiCastLoop(InetAddress.getByName(hostAndPort.getHost()),hostAndPort.getPort(),bufferSize,processor,onerr,stop);		
+		sendMulticast(InetAddress.getByName(hostAndPort.getHost()),hostAndPort.getPort(),message, null);
 	}
 }
