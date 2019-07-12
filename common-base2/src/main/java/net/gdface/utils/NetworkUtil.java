@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.HttpURLConnection;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.Socket;
@@ -26,6 +28,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.google.common.primitives.Bytes;
 
@@ -499,5 +502,52 @@ public class NetworkUtil {
 	public static void sendMulticast(String hostPort,byte[] message) throws IOException{
 		HostAndPort hostAndPort = HostAndPort.fromString(hostPort);
 		sendMulticast(InetAddress.getByName(hostAndPort.getHost()),hostAndPort.getPort(),message, null);
+	}
+	
+	public static final Predicate<InetAddress> FILTER_IPV4 = new Predicate<InetAddress>() {
+		@Override
+		public boolean apply(InetAddress addr) {
+			return addr instanceof Inet4Address;
+		}
+	};
+	public static final Predicate<InetAddress> FILTER_NOT_LINK_LOCAL = new Predicate<InetAddress>() {
+		@Override
+		public boolean apply(InetAddress addr) {
+			return !addr.isLinkLocalAddress();
+		}
+	};
+	/**
+	 * 返回所有物理网卡绑定的IP(ipv4)地址
+	 * @return
+	 */
+	public static Set<InetAddress> ipv4AddressesOfPhysicalNICs() {
+		return addressesOfPhysicalNICs(FILTER_IPV4,FILTER_NOT_LINK_LOCAL);		
+	}
+	/**
+	 * 根据过滤器(filter)指定的规则返回符合要求的所有物理网卡的IP地址
+	 * @param filters
+	 * @return
+	 */
+	@SafeVarargs
+	@SuppressWarnings("unchecked")
+	public static Set<InetAddress> addressesOfPhysicalNICs(Predicate<InetAddress>... filters) {
+		filters = MoreObjects.firstNonNull(filters, new Predicate[]{});
+		final Set<InetAddress> sets = Sets.newHashSet();
+		for(NetworkInterface nic:NetworkUtil.getPhysicalNICs()){
+			Iterator<InetAddress> itor = Iterators.filter(Iterators.forEnumeration(nic.getInetAddresses()),
+					Predicates.and(filters));
+			sets.addAll(Sets.newHashSet(itor));
+		}
+		return sets;
+	}
+	public static boolean isReachable(String address, int port, int timeoutMillis) {
+	    try {
+	        try (Socket soc = new Socket()) {
+	            soc.connect(new InetSocketAddress(address, port), timeoutMillis);
+	        }
+	        return true;
+	    } catch (IOException ex) {
+	        return false;
+	    }
 	}
 }
