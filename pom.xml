@@ -9,7 +9,7 @@
 	<groupId>com.gitee.l0km</groupId>
 	<artifactId>common</artifactId>
 	<name>common aggregator</name>
-	<version>1.1.37-SNAPSHOT</version>
+	<version>1.1.37</version>
 	<packaging>pom</packaging>
 	<url>https://gitee.com/l0km</url>
 	<properties>
