@@ -30,7 +30,7 @@ public class JcifsUtil {
 	/**
 	 * 根据{@code host}提供的主机名返回IP地址<br>
 	 * 用于局域网内主机名解析为IP地址，解析失败返回{@code null}
-	 * @param host address like "192.168.1.10"
+	 * @param host address like "myhost"
 	 * @return 
 	 */
 	public static String getAddressIfPossible(String host){
