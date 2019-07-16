@@ -53,11 +53,16 @@ public class ClientFactory {
     private static class Singleton{
         private static final ThriftClientManager CLIENT_MANAGER = new ThriftClientManager();    
         static{
-            Runtime.getRuntime().addShutdownHook(new Thread(){
-                @Override
-                public void run() {
-                    CLIENT_MANAGER.close();
-                }});
+        	Runtime.getRuntime().addShutdownHook(new Thread(){
+        		@Override
+        		public void run() {
+        			try {
+        				CLIENT_MANAGER.close();
+        			} catch (Exception e) {
+        				e.printStackTrace();
+        			}
+
+        		}});
         }
     }    
     private static final Cache<Class<?>, ThriftClient<?>> THRIFT_CLIENT_CACHE = CacheBuilder.newBuilder().softValues().build();
@@ -502,14 +507,19 @@ public class ClientFactory {
     }
     static{
 		// JVM 结束时自动清除资源池中所有对象
-		Runtime.getRuntime().addShutdownHook(new Thread(){
+    	Runtime.getRuntime().addShutdownHook(new Thread(){
 
-			@Override
-			public void run() {
-				for(GenericObjectPool<?> pool:INSTANCE_POOL_CACHE.asMap().values()){
-					pool.close();
-				}
-			}			
-		});
+    		@Override
+    		public void run() {
+    			try {
+    				for(GenericObjectPool<?> pool:INSTANCE_POOL_CACHE.asMap().values()){
+    					pool.close();
+    				}
+    			} catch (Exception e) {
+    				e.printStackTrace();
+    			}
+
+    		}			
+    	});
     }
 }

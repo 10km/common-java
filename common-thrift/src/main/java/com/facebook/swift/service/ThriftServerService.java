@@ -181,7 +181,12 @@ public class ThriftServerService extends AbstractIdleService{
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				shutDown();
+				try {
+					shutDown();	
+				} catch (Exception e) {
+					logger.error(e.getMessage(),e);
+				}
+				
 			}
 		});
 		addListener(new Listener(){
