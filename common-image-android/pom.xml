@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>com.gitee.l0km</groupId>
 			<artifactId>jimgutil</artifactId>
-			<version>0.3.4</version>
+			<version>0.3.5</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.android/android -->
 		<dependency>
