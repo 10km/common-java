@@ -136,4 +136,18 @@ public class MultiCastDispatcher implements Runnable{
 	public synchronized void stop() {
 		stopListener = Boolean.TRUE;
 	}
+	/**
+	 * 返回组播地址IP
+	 * @return group
+	 */
+	public InetAddress getGroup() {
+		return group;
+	}
+	/**
+	 * 返回侦听端口号
+	 * @return port
+	 */
+	public int getPort() {
+		return port;
+	}
 }
