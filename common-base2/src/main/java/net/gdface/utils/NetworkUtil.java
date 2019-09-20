@@ -56,7 +56,8 @@ public class NetworkUtil {
         /** 过滤器: 在线设备,see also {@link NetworkInterface#isUp()} */UP,
         /** 过滤器: 虚拟接口,see also {@link NetworkInterface#isVirtual()} */VIRTUAL,
         /** 过滤器:LOOPBACK, see also {@link NetworkInterface#isLoopback()} */LOOPBACK,
-        /** 过滤器:物理网卡 */PHYICAL_ONLY;
+        /** 过滤器:物理网卡 */PHYICAL_ONLY,
+        /** 过滤器:物理网卡(非虚拟) */NOVIRTUAL;
 
         @Override
         public boolean apply(NetworkInterface input) {
@@ -77,6 +78,12 @@ public class NetworkUtil {
                             && hardwareAddress.length > 0 
                             && !input.isVirtual() 
                             && !isVMMac(hardwareAddress);
+                }
+                case NOVIRTUAL :{
+                    byte[] hardwareAddress = input.getHardwareAddress();
+                    return null != hardwareAddress 
+                            && hardwareAddress.length > 0 
+                            && !input.isVirtual();
                 }
                 case ALL:
                 default :
@@ -113,6 +120,13 @@ public class NetworkUtil {
      */
     public static Set<NetworkInterface> getPhysicalNICs() {
         return getNICs(Filter.PHYICAL_ONLY,Filter.UP);
+    }
+    /**
+     * 返回所有物理(非虚拟)网卡
+     * @return
+     */
+    public static Set<NetworkInterface> getNoVirtualNICs() {
+        return getNICs(Filter.NOVIRTUAL,Filter.UP);
     }
     /**
      * 将{@code byte[]} 转换为{@code radix}指定格式的字符串
@@ -241,7 +255,7 @@ public class NetworkUtil {
         return isLoopbackAddress(host)? DEFAULT_HOST : host;
     }
     
-    /** 遍历所有物理网上绑定的地址,判断{@code address}是否为本机网卡绑定的地址 */
+    /** 遍历所有物理(非虚拟)网卡上绑定的地址,判断{@code address}是否为本机网卡绑定的地址 */
     public static boolean selfBind(final InetAddress address){
         if(isLocalhost(address)){
             return true;
@@ -251,7 +265,7 @@ public class NetworkUtil {
             public boolean apply(InetAddress input) {
                 return input.getHostAddress().equals(address.getHostAddress());
         }};
-        return Iterators.tryFind(getPhysicalNICs().iterator(),new Predicate<NetworkInterface>(){
+        return Iterators.tryFind(getNoVirtualNICs().iterator(),new Predicate<NetworkInterface>(){
             @Override
             public boolean apply(NetworkInterface input) {
                 return Iterators.tryFind(
@@ -534,6 +548,30 @@ public class NetworkUtil {
 		filters = MoreObjects.firstNonNull(filters, new Predicate[]{});
 		final Set<InetAddress> sets = Sets.newHashSet();
 		for(NetworkInterface nic:NetworkUtil.getPhysicalNICs()){
+			Iterator<InetAddress> itor = Iterators.filter(Iterators.forEnumeration(nic.getInetAddresses()),
+					Predicates.and(filters));
+			sets.addAll(Sets.newHashSet(itor));
+		}
+		return sets;
+	}
+	/**
+	 * 返回所有物理(非虚拟)网卡绑定的IP(ipv4)地址
+	 * @return
+	 */
+	public static Set<InetAddress> ipv4AddressesOfNoVirtualNICs() {
+		return addressesOfNoVirtualNICs(FILTER_IPV4,FILTER_NOT_LINK_LOCAL);		
+	}
+	/**
+	 * 根据过滤器(filter)指定的规则返回符合要求的所有物理(非虚拟)网卡的IP地址
+	 * @param filters
+	 * @return
+	 */
+	@SafeVarargs
+	@SuppressWarnings("unchecked")
+	public static Set<InetAddress> addressesOfNoVirtualNICs(Predicate<InetAddress>... filters) {
+		filters = MoreObjects.firstNonNull(filters, new Predicate[]{});
+		final Set<InetAddress> sets = Sets.newHashSet();
+		for(NetworkInterface nic:NetworkUtil.getNoVirtualNICs()){
 			Iterator<InetAddress> itor = Iterators.filter(Iterators.forEnumeration(nic.getInetAddresses()),
 					Predicates.and(filters));
 			sets.addAll(Sets.newHashSet(itor));
