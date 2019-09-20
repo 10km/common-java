@@ -11,6 +11,8 @@ public class NetworkUtilTest {
 	public void testGetPhysicalNICs() {
 		logger.info("nic:{}",NetworkUtil.ipv4AddressesOfPhysicalNICs());
 		logger.info("nic:{}",NetworkUtil.addressesOfPhysicalNICs(FILTER_IPV4));
+		logger.info("nic:{}",NetworkUtil.ipv4AddressesOfNoVirtualNICs());
+		logger.info("nic:{}",NetworkUtil.addressesOfNoVirtualNICs(FILTER_IPV4));
 	}
 
 }
